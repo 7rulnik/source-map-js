@@ -14,7 +14,7 @@ $ python2 -m SimpleHTTPServer # or `python3 -m http.server`
 ```
 
 Open
-[http://localhost:8000/bench/bench.html](http://localhost:8000/bench/bench.html)
+[http://localhost:8000/bench-js/bench.html](http://localhost:8000/bench-js/bench.html)
 in your browser.
 
 Open `bench.html` in a browser and click on the appropriate button.
