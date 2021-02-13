@@ -62,7 +62,6 @@ async function getTestMapping() {
   smc.eachMapping([].push, mappings, sourceMap.SourceMapConsumer.ORIGINAL_ORDER);
 
   let testMapping = mappings[Math.floor(mappings.length / 13)];
-  smc.destroy();
   return testMapping;
 }
 
@@ -73,7 +72,6 @@ var benchmarks = {
       async function() {
         var smc = await new sourceMap.SourceMapConsumer(testSourceMap);
         smg = sourceMap.SourceMapGenerator.fromSourceMap(smc);
-        smc.destroy();
       },
       () => {
         benchmarkBlackbox(smg.toString().length);
@@ -97,7 +95,6 @@ var benchmarks = {
           }).length
         );
 
-        smc.destroy();
       }
     );
   },
@@ -118,7 +115,6 @@ var benchmarks = {
           })
         );
 
-        smc.destroy();
       }
     );
   },
@@ -140,7 +136,6 @@ var benchmarks = {
         );
       },
       function() {
-        smc.destroy();
       }
     );
   },
@@ -162,7 +157,6 @@ var benchmarks = {
         );
       },
       function() {
-        smc.destroy();
       }
     );
   },
@@ -182,7 +176,6 @@ var benchmarks = {
       benchmarkBlackbox(maxLine);
       benchmarkBlackbox(maxCol);
 
-      smc.destroy();
     });
   },
 
@@ -205,7 +198,6 @@ var benchmarks = {
         benchmarkBlackbox(maxCol);
       },
       function() {
-        smc.destroy();
       }
     );
   }
