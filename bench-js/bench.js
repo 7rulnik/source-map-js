@@ -56,7 +56,7 @@ async function benchmark(setup, action, tearDown = () => {}) {
 }
 
 async function getTestMapping() {
-  let smc = await new sourceMap.SourceMapConsumer(testSourceMap);
+  let smc = new sourceMap.SourceMapConsumer(testSourceMap);
 
   let mappings = [];
   smc.eachMapping([].push, mappings, sourceMap.SourceMapConsumer.ORIGINAL_ORDER);
@@ -70,7 +70,7 @@ var benchmarks = {
     let smg;
     return benchmark(
       async function() {
-        var smc = await new sourceMap.SourceMapConsumer(testSourceMap);
+        var smc = new sourceMap.SourceMapConsumer(testSourceMap);
         smg = sourceMap.SourceMapGenerator.fromSourceMap(smc);
       },
       () => {
@@ -86,7 +86,7 @@ var benchmarks = {
         testMapping = await getTestMapping();
       },
       async function() {
-        let smc = await new sourceMap.SourceMapConsumer(testSourceMap);
+        let smc = new sourceMap.SourceMapConsumer(testSourceMap);
 
         benchmarkBlackbox(
           smc.allGeneratedPositionsFor({
@@ -106,7 +106,7 @@ var benchmarks = {
         testMapping = await getTestMapping();
       },
       async function() {
-        let smc = await new sourceMap.SourceMapConsumer(testSourceMap);
+        let smc = new sourceMap.SourceMapConsumer(testSourceMap);
 
         benchmarkBlackbox(
           smc.originalPositionFor({
@@ -125,7 +125,7 @@ var benchmarks = {
     return benchmark(
       async function() {
         testMapping = await getTestMapping();
-        smc = await new sourceMap.SourceMapConsumer(testSourceMap);
+        smc = new sourceMap.SourceMapConsumer(testSourceMap);
       },
       async function() {
         benchmarkBlackbox(
@@ -146,7 +146,7 @@ var benchmarks = {
     return benchmark(
       async function() {
         testMapping = await getTestMapping();
-        smc = await new sourceMap.SourceMapConsumer(testSourceMap);
+        smc = new sourceMap.SourceMapConsumer(testSourceMap);
       },
       async function() {
         benchmarkBlackbox(
@@ -163,7 +163,7 @@ var benchmarks = {
 
   "parse.and.iterate": () => {
     return benchmark(noop, async function() {
-      const smc = await new sourceMap.SourceMapConsumer(testSourceMap);
+      const smc = new sourceMap.SourceMapConsumer(testSourceMap);
 
       let maxLine = 0;
       let maxCol = 0;
@@ -183,7 +183,7 @@ var benchmarks = {
     let smc;
     return benchmark(
       async function() {
-        smc = await new sourceMap.SourceMapConsumer(testSourceMap);
+        smc = new sourceMap.SourceMapConsumer(testSourceMap);
       },
       async function() {
         let maxLine = 0;
