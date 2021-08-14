@@ -70,5 +70,5 @@
     "doctoc": "^0.15.0",
     "webpack": "^1.12.0"
   },
-  "typings": "source-map"
+  "typings": "source-map.d.ts"
 }
