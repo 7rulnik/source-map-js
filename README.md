@@ -1,10 +1,8 @@
 # Source Map JS
 
-<!-- [![Build Status](https://travis-ci.org/mozilla/source-map.png?branch=master)](https://travis-ci.org/mozilla/source-map) -->
-
 [![NPM](https://nodei.co/npm/source-map-js.png?downloads=true&downloadRank=true)](https://www.npmjs.com/package/source-map-js)
 
-## Difference between original [source-map](https://github.com/mozilla/source-map)
+Difference between original [source-map](https://github.com/mozilla/source-map):
 
 > TL,DR: it's fork of original source-map@0.6, but with perfomance optimizations.
 
