@@ -63,7 +63,8 @@
     "doctoc": "^0.15.0"
   },
   "clean-publish": {
-    "cleanDocs": true
+    "cleanDocs": true,
+    "cleanComments": true
   },
   "typings": "source-map"
 }
