@@ -68,5 +68,5 @@
     "cleanDocs": true,
     "cleanComments": true
   },
-  "typings": "source-map"
+  "typings": "source-map.d.ts"
 }
