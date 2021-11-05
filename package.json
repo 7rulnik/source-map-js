@@ -65,8 +65,7 @@
     "webpack": "^1.12.0"
   },
   "clean-publish": {
-    "cleanDocs": true,
-    "cleanComments": true
+    "cleanDocs": true
   },
   "typings": "source-map.d.ts"
 }
