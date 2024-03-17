@@ -1,8 +1,19 @@
 # Change Log
 
-## 2.0.0
+## 1.1.0
+
+Add `ignoreInvalidMapping` option to `SourceMapGenerator`. If enabled, source-map-js will not throw an error on the incorrect previous source map. Instead, it will print warnings and ignore broken mappings.
+
+```js
+var generator = new sourceMap.SourceMapGenerator({
+  file: "my-generated-javascript-file.js",
+  sourceRoot: "http://example.com/app/js/",
+  ignoreInvalidMapping: true,
+});
+```
 
 * Do not throw an error since broken prev map is popular issue #20 ([#20](https://github.com/7rulnik/source-map-js/pull/20)) [@ai](https://github.com/ai)
+* Add ignoreInvalidMapping option ([#21](https://github.com/7rulnik/source-map-js/pull/21)) [@7rulnik](https://github.com/7rulnik)
 
 ## 1.0.3
 
