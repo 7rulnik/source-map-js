@@ -466,6 +466,9 @@ You may pass an object with the following properties:
   discretion, as a last resort. Even then, one should avoid using this flag when
   running tests, if possible.
 
+* `ignoreInvalidMapping`: Optional. When `true`, instead of throwing error on
+  invalid mapping, it will be ignored.
+
 ```js
 var generator = new sourceMap.SourceMapGenerator({
   file: "my-generated-javascript-file.js",
