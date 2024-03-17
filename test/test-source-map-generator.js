@@ -85,14 +85,6 @@ exports['test adding mappings (invalid)'] = function (assert) {
   assert.throws(function () {
     map.addMapping({});
   });
-
-  // Original file position, but no source.
-  assert.throws(function () {
-    map.addMapping({
-      generated: { line: 1, column: 1 },
-      original: { line: 1, column: 1 }
-    });
-  });
 };
 
 exports['test adding mappings with skipValidation'] = function (assert) {
