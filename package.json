@@ -58,12 +58,15 @@
     "test": "npm run build && node test/run-tests.js",
     "build": "webpack --color",
     "toc": "doctoc --title '## Table of Contents' README.md && doctoc --title '## Table of Contents' CONTRIBUTING.md",
-    "bench": "node --max-old-space-size=8192 bench/bench-shell-bindings.js"
+    "bench": "node --max-old-space-size=8192 bench/bench-shell-bindings.js",
+    "bench-web": "webpack build --config bench-web/webpack.config.js &&serve ./bench-web"
   },
   "devDependencies": {
     "clean-publish": "^3.1.0",
     "doctoc": "^0.15.0",
-    "webpack": "^1.12.0"
+    "serve": "^14.2.5",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1"
   },
   "clean-publish": {
     "cleanDocs": true
