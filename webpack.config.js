@@ -15,6 +15,7 @@ module.exports = [
       filename: "source-map.js",
       library: "sourceMap",
       libraryTarget: "umd",
+      globalObject: 'this'
     },
   },
 
@@ -27,6 +28,7 @@ module.exports = [
       filename: "source-map.debug.js",
       library: "sourceMap",
       libraryTarget: "umd",
+      globalObject: 'this'
     },
     devtool: "inline-source-map"
   },
@@ -40,6 +42,7 @@ module.exports = [
       filename: "source-map.min.js",
       library: "sourceMap",
       libraryTarget: "umd",
+      globalObject: 'this'
     },
     devtool: "source-map"
   }

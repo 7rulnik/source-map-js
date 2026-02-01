@@ -55,11 +55,11 @@
   },
   "license": "BSD-3-Clause",
   "scripts": {
-    "test": "yarn run build && node test/run-tests.js",
+    "test": "node test/run-tests.js",
     "build": "webpack build --config webpack.config.js",
     "toc": "doctoc --title '## Table of Contents' README.md && doctoc --title '## Table of Contents' CONTRIBUTING.md",
-    "bench": "node --max-old-space-size=8192 bench/bench-shell-bindings.js",
-    "bench-web": "webpack build --config bench-web/webpack.config.js &&serve ./bench-web"
+    "bench": "yarn run build && node --max-old-space-size=8192 bench/bench-shell-bindings.js",
+    "bench-web": "webpack build --config bench-web/webpack.config.js && serve ./bench-web"
   },
   "devDependencies": {
     "clean-publish": "^3.1.0",
