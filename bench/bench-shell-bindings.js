@@ -11,10 +11,10 @@ if (typeof print !== "function") {
   print = console.log.bind(console);
 }
 
-load("./scalajs-runtime-sourcemap.js");
-load("./stats.js");
-load("../dist/source-map.js");
-load("./bench.js");
+load(__dirname + "/scalajs-runtime-sourcemap.js");
+load(__dirname + "/stats.js");
+load(__dirname + "/../dist/source-map.js");
+load(__dirname + "/bench.js");
 
 print("Parsing source map");
 print(benchmarkParseSourceMap());

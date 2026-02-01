@@ -57,7 +57,8 @@
   "scripts": {
     "test": "npm run build && node test/run-tests.js",
     "build": "webpack --color",
-    "toc": "doctoc --title '## Table of Contents' README.md && doctoc --title '## Table of Contents' CONTRIBUTING.md"
+    "toc": "doctoc --title '## Table of Contents' README.md && doctoc --title '## Table of Contents' CONTRIBUTING.md",
+    "bench": "node --max-old-space-size=8192 bench/bench-shell-bindings.js"
   },
   "devDependencies": {
     "clean-publish": "^3.1.0",
