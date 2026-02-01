@@ -66,7 +66,9 @@ async function getTestMapping() {
 }
 
 var benchmarks = {
-  "SourceMapGenerator#toString": () => {
+  "SourceMapGenerator#toString": {
+    description: "Measures the performance of generating a final source map string, which involves encoding mappings into VLQ format.",
+    run: () => {
     let smg;
     return benchmark(
       async function() {
@@ -77,9 +79,11 @@ var benchmarks = {
         benchmarkBlackbox(smg.toString().length);
       }
     );
-  },
+  }},
 
-  "set.first.breakpoint": () => {
+  "set.first.breakpoint": {
+    description: "Measures the 'cold' performance of finding generated positions for an original source location (typical when a user first opens a file and sets a breakpoint).",
+    run: () => {
     let testMapping;
     return benchmark(
       async function() {
@@ -97,9 +101,11 @@ var benchmarks = {
 
       }
     );
-  },
+  }},
 
-  "first.pause.at.exception": () => {
+  "first.pause.at.exception": {
+    description: "Measures 'cold' performance for mapping a generated location back to source (typical when a debugger stops at an exception).",
+    run: () => {
     let testMapping;
     return benchmark(
       async function() {
@@ -117,9 +123,11 @@ var benchmarks = {
 
       }
     );
-  },
+  }},
 
-  "subsequent.setting.breakpoints": () => {
+  "subsequent.setting.breakpoints": {
+    description: "Measures 'warm' performance for finding generated positions, where the consumer's internal caches/indexes are already built.",
+    run: () => {
     let testMapping;
     let smc;
     return benchmark(
@@ -138,9 +146,11 @@ var benchmarks = {
       function() {
       }
     );
-  },
+  }},
 
-  "subsequent.pausing.at.exceptions": () => {
+  "subsequent.pausing.at.exceptions": {
+    description: "Measures 'warm' performance for mapping generated locations back to source.",
+    run: () => {
     let testMapping;
     let smc;
     return benchmark(
@@ -159,9 +169,11 @@ var benchmarks = {
       function() {
       }
     );
-  },
+  }},
 
-  "parse.and.iterate": () => {
+  "parse.and.iterate": {
+    description: "Measures the combined overhead of parsing a source map and exhaustively iterating over all mappings.",
+    run: () => {
     return benchmark(noop, async function() {
       const smc = new sourceMap.SourceMapConsumer(testSourceMap);
 
@@ -177,9 +189,11 @@ var benchmarks = {
       benchmarkBlackbox(maxCol);
 
     });
-  },
+  }},
 
-  "iterate.already.parsed": () => {
+  "iterate.already.parsed": {
+    description: "Measures the raw speed of the mapping iterator on a consumer that has already been initialized.",
+    run: () => {
     let smc;
     return benchmark(
       async function() {
@@ -200,5 +214,5 @@ var benchmarks = {
       function() {
       }
     );
-  }
+  }}
 };

@@ -119,8 +119,12 @@ for (let bench of Object.keys(benchmarks)) {
   button.innerHTML = `<h2>${bench}</h2>`;
   document.body.appendChild(button);
 
+  const description = document.createElement("p");
+  description.textContent = benchmarks[bench].description;
+  document.body.appendChild(description);
+
   const results = document.createElement("div");
   document.body.appendChild(results);
 
-  benchOnClick(button, results, bench, benchmarks[bench]);
+  benchOnClick(button, results, bench, benchmarks[bench].run);
 }
