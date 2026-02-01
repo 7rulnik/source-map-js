@@ -17,7 +17,7 @@ load(__dirname + "/../dist/source-map.js");
 load(__dirname + "/bench.js");
 
 print("Parsing source map");
-print(benchmarkParseSourceMap());
+print(benchmarkParseSourceMap().toString());
 print();
 print("Serializing source map");
-print(benchmarkSerializeSourceMap());
+print(benchmarkSerializeSourceMap().toString());
