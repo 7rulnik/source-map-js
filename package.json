@@ -67,5 +67,6 @@
   "clean-publish": {
     "cleanDocs": true
   },
-  "typings": "source-map.d.ts"
+  "typings": "source-map.d.ts",
+  "packageManager": "yarn@4.12.0"
 }
