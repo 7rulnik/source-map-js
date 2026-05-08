@@ -55,7 +55,7 @@
   },
   "license": "BSD-3-Clause",
   "scripts": {
-    "test": "node test/run-tests.js",
+    "test": "node --test 'test/test-*.js'",
     "build": "webpack build --config webpack.config.js",
     "toc": "doctoc --title '## Table of Contents' README.md && doctoc --title '## Table of Contents' CONTRIBUTING.md",
     "bench": "yarn run build && node --max-old-space-size=8192 bench/bench-shell-bindings.js",

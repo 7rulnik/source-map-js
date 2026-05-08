@@ -5,9 +5,12 @@
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
+var test = require('node:test').test;
+var assert = require('node:assert');
+
 var base64VLQ = require('../lib/base64-vlq');
 
-exports['test normal encoding and decoding'] = function (assert) {
+test('test normal encoding and decoding', () => {
   var result = {};
   for (var i = -255; i < 256; i++) {
     var str = base64VLQ.encode(i);
@@ -15,4 +18,4 @@ exports['test normal encoding and decoding'] = function (assert) {
     assert.equal(result.value, i);
     assert.equal(result.rest, str.length);
   }
-};
+});
