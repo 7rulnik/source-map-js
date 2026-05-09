@@ -1,5 +1,25 @@
-// This is an approximation of Chrome's source map decoding.
-// https://source.chromium.org/chromium/chromium/src/+/main:v8/tools/sourcemap.mjs;drc=7a90c32032759a1596fb9a0549cced1b89f42c5f
+// Vendored verbatim from @jridgewell/sourcemaps:
+//   packages/trace-mapping/benchmark/chrome.mjs
+//   commit b7e1dfeef0fa2949702bb53c78f704d44ac158a0 (2024-03-08, single commit, untouched since)
+//   https://github.com/jridgewell/sourcemaps/blob/b7e1dfeef0fa2949702bb53c78f704d44ac158a0/packages/trace-mapping/benchmark/chrome.mjs
+//
+// Local diff vs upstream: one defensive guard in `findEntryReversed` for
+// sources with no reverse mappings (`if (!mappings) return this._mappings[0]`).
+//
+// Lineage:
+//   1. ~2012 Blink/DevTools `SourceMap.js` (revision 153407) — the original.
+//   2. V8 imported it as `tools/sourcemap.mjs`, frozen since (license churn only).
+//      https://chromium.googlesource.com/v8/v8/+/main/tools/sourcemap.mjs
+//   3. jridgewell vendored that V8 file in 2024, adding a real `ParsedURL`
+//      class so URL resolution actually works (V8's copy stubs it out).
+//   4. We ported jridgewell's file as part of the bench port.
+//
+// Note: this is *not* the current Chrome DevTools decoder. The live one is
+// TypeScript at devtools-frontend/front_end/core/sdk/SourceMap.ts and has
+// diverged considerably. See `chrome-2026.mjs` for a port of that file —
+// the two are kept side by side as distinct design points (the 2012 lineage
+// uses tuples and an O(1) reverse index; the 2026 one uses class instances
+// and a sorted reverse index).
 
 export function SourceMap(sourceMappingURL, payload) {
   if (!SourceMap.prototype._base64Map) {

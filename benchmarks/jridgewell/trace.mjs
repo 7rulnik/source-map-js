@@ -15,6 +15,7 @@ import { SourceMapConsumer as SourceMapConsumerJsLatest } from 'source-map-js-la
 import { SourceMapConsumer as SourceMapConsumer061 } from 'source-map';
 import { SourceMapConsumer as SourceMapConsumerWasm } from 'source-map-wasm';
 import { SourceMap as ChromeMap } from './chrome.mjs';
+import { SourceMap as ChromeMap2026 } from './chrome-2026.mjs';
 
 const { SourceMapConsumer: CurrentSourceMapConsumer } = currentSourceMap;
 
@@ -62,7 +63,7 @@ async function bench(file) {
 
   console.log('Memory Usage:');
   const results = [];
-  let benchmark, smcjsCurrent, smcjsLatest, smc061, smcWasm, traceMap, chromeMap;
+  let benchmark, smcjsCurrent, smcjsLatest, smc061, smcWasm, traceMap, chromeMap, chromeMap2026;
 
   smcjsCurrent = await track('source-map-js current', results, () => {
     const smc = new CurrentSourceMapConsumer(encodedMapData);
@@ -100,6 +101,13 @@ async function bench(file) {
     });
     chromeMap = await track('Chrome dev tools', results, async () => {
       const cm = new ChromeMap('url', encodedMapData);
+      cm.findEntry(0, 0);
+      const fs0 = cm.sources()[0];
+      cm.findEntryReversed(fs0, 6);
+      return cm;
+    });
+    chromeMap2026 = await track('Chrome dev tools 2026', results, async () => {
+      const cm = new ChromeMap2026('url', encodedMapData);
       cm.findEntry(0, 0);
       const fs0 = cm.sources()[0];
       cm.findEntryReversed(fs0, 6);
@@ -150,6 +158,9 @@ async function bench(file) {
       })
       .add('Chrome dev tools: encoded Object input', () => {
         new ChromeMap('url', encodedMapData).findEntry(0, 0);
+      })
+      .add('Chrome dev tools 2026: encoded Object input', () => {
+        new ChromeMap2026('url', encodedMapData).findEntry(0, 0);
       });
     // WASM isn't tested in init because its async and OOMs.
     // .add('source-map-0.8.0: encoded Object input', () => { })
@@ -236,6 +247,17 @@ async function bench(file) {
           const column = line[j][0];
           chromeMap.findEntry(i, column);
         }
+      })
+      .add('Chrome dev tools 2026: encoded findEntry', () => {
+        const i = Math.floor(Math.random() * lines.length);
+        const line = lines[i];
+        if (line.length === 0) return;
+        const shift = Math.ceil(line.length / 100);
+        for (let _ = 0; _ < line.length; _ += shift) {
+          const j = Math.floor(Math.random() * line.length);
+          const column = line[j][0];
+          chromeMap2026.findEntry(i, column);
+        }
       });
   }
   benchmark
@@ -314,6 +336,16 @@ async function bench(file) {
           const column = line[j][0];
           chromeMap.findEntry(i, column);
         }
+      })
+      .add('Chrome dev tools 2026: encoded findEntry', () => {
+        const i = Math.floor(Math.random() * lines.length);
+        const line = lines[i];
+        if (line.length === 0) return;
+        const shift = Math.ceil(line.length / 100);
+        for (let j = 0; j < line.length; j += shift) {
+          const column = line[j][0];
+          chromeMap2026.findEntry(i, column);
+        }
       });
   }
   benchmark
@@ -355,6 +387,11 @@ async function bench(file) {
       })
       .add('Chrome dev tools: encoded findEntryReversed', () => {
         const cm = new ChromeMap('url', encodedMapData);
+        const fs0 = cm.sources()[0];
+        cm.findEntryReversed(fs0, 6);
+      })
+      .add('Chrome dev tools 2026: encoded findEntryReversed', () => {
+        const cm = new ChromeMap2026('url', encodedMapData);
         const fs0 = cm.sources()[0];
         cm.findEntryReversed(fs0, 6);
       });
@@ -404,6 +441,11 @@ async function bench(file) {
       .add('Chrome dev tools: encoded findEntryReversed', () => {
         for (const source of chromeMap.sources()) {
           chromeMap.findEntryReversed(source, 6);
+        }
+      })
+      .add('Chrome dev tools 2026: encoded findEntryReversed', () => {
+        for (const source of chromeMap2026.sources()) {
+          chromeMap2026.findEntryReversed(source, 6);
         }
       });
   }
