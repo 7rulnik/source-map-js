@@ -5,17 +5,18 @@ very appreciated.
 
 --------------------------------------------------------------------------------
 
-<!-- `npm run toc` to regenerate the Table of Contents -->
+<!-- `yarn toc` to regenerate the Table of Contents -->
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents
 
 - [Filing Issues](#filing-issues)
-- [Building From Source](#building-from-source)
+- [Getting Started](#getting-started)
 - [Submitting Pull Requests](#submitting-pull-requests)
 - [Running Tests](#running-tests)
 - [Writing New Tests](#writing-new-tests)
+- [Benchmarks](#benchmarks)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -35,32 +36,16 @@ If you are filing an issue for a bug or other misbehavior, please provide:
 
 * **The actual result.**
 
-## Building From Source
+## Getting Started
 
-Install Node.js and then run
+```
+$ git clone https://github.com/7rulnik/source-map-js.git
+$ cd source-map-js/
+$ yarn install
+```
 
-    $ git clone https://github.com/mozilla/source-map.git
-    $ cd source-map/
-    $ npm install
-
-Next, run
-
-    $ npm run build
-
-This will create the following files:
-
-* `dist/source-map.js` - The plain browser build.
-
-* `dist/source-map.min.js` - The minified browser build.
-
-* `dist/source-map.min.js.map` - The source map for the minified browser build.
-
-* `dist/source-map.debug.js` - The debug browser build.
-
-* `dist/source-map.debug.js.map` - The source map for the debug browser build.
-
-* `dist/test/*` - These are the test files built for running as xpcshell unit
-  tests within mozilla-central.
+The package is consumed directly from `source-map.js` + `lib/` — there is no
+build step.
 
 ## Submitting Pull Requests
 
@@ -73,52 +58,52 @@ force push to the remote branch to update the pull request.
 
 ## Running Tests
 
-The test suite is written for node.js. Install node.js `0.10.0` or greater and
-then run the tests with `npm test`:
+Tests run on Node's built-in test runner (`node --test`). CI runs against
+Node 22, 24, and 26.
 
 ```shell
-$ npm test
-> source-map@0.5.0 test /Users/fitzgen/src/source-map
-> node test/run-tests.js
-
-
-119 / 119 tests passed.
+$ yarn test                # all suites
+$ yarn test:public         # public-API tests
+$ yarn test:internal       # internal-helper tests
+$ yarn test:conformance    # ECMA-426 conformance suite
+$ yarn test:coverage       # with coverage thresholds enforced
 ```
 
 ## Writing New Tests
 
-To add new tests, create a new file named `test/test-your-new-test-name.js` and
-export your test functions with names that start with "test", for example:
+Tests live under `test/{public,internal,conformance}/` and are picked up by the
+`test-*.js` glob in `package.json`. Each file uses Node's test runner directly:
 
 ```js
-exports["test issue #123: doing the foo bar"] = function (assert) {
-  ...
-};
+const test = require('node:test').test;
+const assert = require('node:assert');
+const sourceMap = require('../../source-map');
+
+test('issue #123: doing the foo bar', () => {
+  assert.doesNotThrow(() => {
+    new sourceMap.SourceMapConsumer(/* ... */);
+  });
+});
 ```
 
-The new tests will be located and run automatically when you run the full test
-suite.
+Use `test('name', { todo: true }, fn)` (or `test.todo`) for known-failing
+specs you want surfaced but not blocking — these show up as `# TODO` in the
+output instead of failing the run.
 
-The `assert` argument is a cut down version of node's assert module. You have
-access to the following assertion functions:
-
-* `doesNotThrow`
-
-* `equal`
-
-* `ok`
-
-* `strictEqual`
-
-* `throws`
-
-(The reason for the restricted set of test functions is because we need the
-tests to run inside Firefox's test suite as well and Firefox has a shimmed
-version of the assert module.)
-
-There are additional test utilities and helpers in `./test/util.js` which you
-can use as well:
+Shared fixtures and helpers live in `test/util.js`:
 
 ```js
-var util = require('./util');
+const util = require('../util');
+```
+
+## Benchmarks
+
+Three suites under `benchmarks/`, each ported from a different upstream — see
+the per-directory README for details.
+
+```shell
+$ yarn bench:mozilla-0.6.1            # parse + serialize (mozilla 0.6.1)
+$ yarn bench:mozilla-master           # cold/warm consumer (mozilla master)
+$ yarn bench:jridgewell:trace         # originalPositionFor + generatedPositionFor
+$ yarn bench:jridgewell:generate      # addMapping + serialization
 ```
