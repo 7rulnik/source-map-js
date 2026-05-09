@@ -48,6 +48,25 @@ test('test specific encoded forms', () => {
   });
 });
 
+test('decode throws on truncated VLQ', () => {
+  var result = {};
+  // 'g' (32 = continuation bit only) advertises another digit but the
+  // string ends, so decode should throw rather than read past the end.
+  assert.throws(
+    () => base64VLQ.decode('g', 0, result),
+    /Expected more digits in base 64 VLQ value/
+  );
+});
+
+test('decode throws on invalid base64 digit', () => {
+  var result = {};
+  // '!' is not a valid base64 character; base64.decode returns -1.
+  assert.throws(
+    () => base64VLQ.decode('!', 0, result),
+    /Invalid base64 digit/
+  );
+});
+
 // Source-map-js's VLQ uses signed 32-bit shifts in toVLQSigned, so the safe
 // roundtrip range is [-(2**29), 2**29]. Sweep the boundary to catch regressions.
 test('test wide-range encoding and decoding', () => {

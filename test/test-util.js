@@ -259,3 +259,118 @@ test('test computeSourceURL', () => {
   assert.equal(libUtil.computeSourceURL('http://example.com/dir', '/test.js'),
                'http://example.com/dir/test.js');
 });
+
+function mapping(o) {
+  return Object.assign({
+    source: 'a.js',
+    originalLine: 1,
+    originalColumn: 0,
+    generatedLine: 1,
+    generatedColumn: 0,
+    name: null,
+  }, o);
+}
+
+test('compareByOriginalPositions falls through to generated cols/lines and name', () => {
+  var cmp = libUtil.compareByOriginalPositions;
+  var base = mapping({});
+
+  // Equal source/originalLine/originalColumn: differ on generatedColumn.
+  assert.ok(cmp(mapping({ generatedColumn: 1 }), base) > 0);
+  assert.ok(cmp(base, mapping({ generatedColumn: 1 })) < 0);
+
+  // onlyCompareOriginal short-circuits before generated comparisons.
+  assert.equal(cmp(mapping({ generatedColumn: 1 }), base, true), 0);
+
+  // Differ on generatedLine.
+  assert.ok(cmp(mapping({ generatedLine: 2 }), base) > 0);
+  assert.ok(cmp(base, mapping({ generatedLine: 2 })) < 0);
+
+  // Differ on name.
+  assert.ok(cmp(mapping({ name: 'b' }), mapping({ name: 'a' })) > 0);
+  assert.ok(cmp(mapping({ name: 'a' }), mapping({ name: 'b' })) < 0);
+  assert.equal(cmp(mapping({ name: 'a' }), mapping({ name: 'a' })), 0);
+});
+
+test('compareByOriginalPositions handles null sources via strcmp', () => {
+  var cmp = libUtil.compareByOriginalPositions;
+  // strcmp's null branches: null is "greater than" any string.
+  assert.ok(cmp(mapping({ source: null }), mapping({ source: 'a.js' })) > 0);
+  assert.ok(cmp(mapping({ source: 'a.js' }), mapping({ source: null })) < 0);
+  assert.equal(cmp(mapping({ source: null }), mapping({ source: null })), 0);
+});
+
+test('compareByOriginalPositionsNoSource compares generated cols/lines and name', () => {
+  var cmp = libUtil.compareByOriginalPositionsNoSource;
+  var base = mapping({ source: 'ignored' });
+
+  // onlyCompareOriginal short-circuits.
+  assert.equal(cmp(mapping({ generatedColumn: 1 }), base, true), 0);
+
+  // Differ on generatedColumn.
+  assert.ok(cmp(mapping({ generatedColumn: 1 }), base) > 0);
+
+  // Differ on generatedLine.
+  assert.ok(cmp(mapping({ generatedLine: 2 }), base) > 0);
+
+  // Differ on name.
+  assert.ok(cmp(mapping({ name: 'b' }), mapping({ name: 'a' })) > 0);
+  assert.ok(cmp(mapping({ name: 'a' }), mapping({ name: 'b' })) < 0);
+});
+
+test('compareByGeneratedPositionsDeflated compares source, original, name', () => {
+  var cmp = libUtil.compareByGeneratedPositionsDeflated;
+  var base = mapping({});
+
+  // onlyCompareGenerated short-circuits.
+  assert.equal(cmp(mapping({ source: 'b.js' }), base, true), 0);
+
+  // Differ on source (also exercises strcmp non-null path).
+  assert.ok(cmp(mapping({ source: 'b.js' }), mapping({ source: 'a.js' })) > 0);
+
+  // Differ on originalLine.
+  assert.ok(cmp(mapping({ originalLine: 2 }), base) > 0);
+
+  // Differ on originalColumn.
+  assert.ok(cmp(mapping({ originalColumn: 1 }), base) > 0);
+
+  // Differ on name.
+  assert.ok(cmp(mapping({ name: 'b' }), mapping({ name: 'a' })) > 0);
+});
+
+test('compareByGeneratedPositionsDeflatedNoLine compares source, original, name', () => {
+  var cmp = libUtil.compareByGeneratedPositionsDeflatedNoLine;
+  var base = mapping({});
+
+  // onlyCompareGenerated short-circuits.
+  assert.equal(cmp(mapping({ source: 'b.js' }), base, true), 0);
+
+  // Differ on source.
+  assert.ok(cmp(mapping({ source: 'b.js' }), mapping({ source: 'a.js' })) > 0);
+
+  // Differ on originalLine.
+  assert.ok(cmp(mapping({ originalLine: 2 }), base) > 0);
+
+  // Differ on originalColumn.
+  assert.ok(cmp(mapping({ originalColumn: 1 }), base) > 0);
+
+  // Differ on name.
+  assert.ok(cmp(mapping({ name: 'b' }), mapping({ name: 'a' })) > 0);
+});
+
+test('compareByGeneratedPositionsInflated compares source, original, name', () => {
+  var cmp = libUtil.compareByGeneratedPositionsInflated;
+  var base = mapping({});
+
+  // Differ on source.
+  assert.ok(cmp(mapping({ source: 'b.js' }), mapping({ source: 'a.js' })) > 0);
+
+  // Differ on originalLine.
+  assert.ok(cmp(mapping({ originalLine: 2 }), base) > 0);
+
+  // Differ on originalColumn.
+  assert.ok(cmp(mapping({ originalColumn: 1 }), base) > 0);
+
+  // Differ on name.
+  assert.ok(cmp(mapping({ name: 'b' }), mapping({ name: 'a' })) > 0);
+});

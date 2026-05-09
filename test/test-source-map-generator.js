@@ -88,6 +88,64 @@ test('test adding mappings (invalid)', () => {
   assert.throws(function () {
     map.addMapping({});
   });
+
+  // original present but generated missing source -> invalid mapping branch.
+  assert.throws(function () {
+    map.addMapping({
+      generated: { line: 1, column: 1 },
+      original: { line: 1, column: 1 }
+    });
+  }, /Invalid mapping/);
+
+  // original.line / original.column not numbers -> dedicated error message.
+  assert.throws(function () {
+    map.addMapping({
+      generated: { line: 1, column: 1 },
+      original: { line: null, column: null },
+      source: 'a.js'
+    });
+  }, /original\.line and original\.column are not numbers/);
+});
+
+test('test adding invalid mappings with ignoreInvalidMapping', () => {
+  var map = new SourceMapGenerator({
+    file: 'generated-foo.js',
+    sourceRoot: '.',
+    ignoreInvalidMapping: true
+  });
+
+  // Capture console.warn so the warning paths execute without leaking output.
+  var originalWarn = console.warn;
+  var warnings = [];
+  console.warn = function (msg) { warnings.push(msg); };
+  try {
+    // Hits the original.line/column-not-numbers warn branch.
+    assert.doesNotThrow(function () {
+      map.addMapping({
+        generated: { line: 1, column: 1 },
+        original: { line: null, column: null },
+        source: 'a.js'
+      });
+    });
+
+    // Hits the generic invalid-mapping warn branch.
+    assert.doesNotThrow(function () {
+      map.addMapping({
+        generated: { line: 1, column: 1 },
+        original: { line: 1, column: 1 }
+      });
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  assert.equal(warnings.length, 2);
+  assert.match(warnings[0], /original\.line and original\.column are not numbers/);
+  assert.match(warnings[1], /Invalid mapping/);
+
+  // The skipped mappings should not have produced any output.
+  var serialized = JSON.parse(map.toString());
+  assert.equal(serialized.mappings, '');
 });
 
 test('test adding mappings with skipValidation', () => {

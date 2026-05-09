@@ -97,3 +97,9 @@ test('test multiple matches at the beginning', () => {
   assert.equal(binarySearch.search(needle, haystack, numberCompare,
                                    binarySearch.LEAST_UPPER_BOUND), 0);
 });
+
+test('test empty haystack returns -1', () => {
+  assert.equal(binarySearch.search(1, [], numberCompare), -1);
+  assert.equal(binarySearch.search(1, [], numberCompare,
+                                   binarySearch.LEAST_UPPER_BOUND), -1);
+});

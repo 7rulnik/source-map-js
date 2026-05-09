@@ -1280,3 +1280,108 @@ test('test absolute sourceURL resolution with sourceMapURL', () => {
   assert.equal(consumer.sources.length, 1);
   assert.equal(consumer.sources[0], 'http://www.example.com/src/something.js');
 });
+
+test('eachMapping throws on unknown order', () => {
+  var map = new SourceMapConsumer(util.testMap);
+  assert.throws(() => map.eachMapping(() => {}, null, 'NOPE'),
+    /Unknown order of iteration/);
+});
+
+test('BasicSourceMapConsumer accepts a JSON string directly', () => {
+  var map = new BasicSourceMapConsumer(JSON.stringify(util.testMap));
+  assert.equal(map.sources.length, 2);
+});
+
+test('BasicSourceMapConsumer throws on unsupported version', () => {
+  assert.throws(() => new BasicSourceMapConsumer({
+    version: 2,
+    sources: ['a.js'],
+    names: [],
+    mappings: ''
+  }), /Unsupported version: 2/);
+});
+
+test('IndexedSourceMapConsumer accepts a JSON string directly', () => {
+  var map = new IndexedSourceMapConsumer(JSON.stringify(util.indexedTestMap));
+  assert.equal(map.sources.length, 2);
+});
+
+test('IndexedSourceMapConsumer throws on unsupported version', () => {
+  assert.throws(() => new IndexedSourceMapConsumer({
+    version: 2,
+    sections: []
+  }), /Unsupported version: 2/);
+});
+
+test('originalPositionFor rejects non-positive line and negative column', () => {
+  var map = new SourceMapConsumer(util.testMap);
+  assert.throws(() => map.originalPositionFor({ line: 0, column: 0 }),
+    /Line must be greater than or equal to 1/);
+  assert.throws(() => map.originalPositionFor({ line: 1, column: -1 }),
+    /Column must be greater than or equal to 0/);
+});
+
+test('generatedPositionFor returns nulls for unknown source', () => {
+  var map = new SourceMapConsumer(util.testMap);
+  var pos = map.generatedPositionFor({
+    source: 'no-such-source.js',
+    line: 1,
+    column: 0
+  });
+  assert.equal(pos.line, null);
+  assert.equal(pos.column, null);
+  assert.equal(pos.lastColumn, null);
+});
+
+test('sourceContentFor resolves file:// URIs back to known sources', () => {
+  // sourceRoot is a file:// URL but the source's absolute path lives outside
+  // it. Looking up by `file://<absolute-path>` should still find the content
+  // by stripping the `file://` prefix.
+  var map = new SourceMapConsumer({
+    version: 3,
+    file: 'min.js',
+    sourceRoot: 'file:///the/root',
+    sources: ['/elsewhere/one.js'],
+    sourcesContent: ['ONE_CONTENT'],
+    names: [],
+    mappings: 'CAAC'
+  });
+  assert.equal(map.sourceContentFor('file:///elsewhere/one.js'), 'ONE_CONTENT');
+});
+
+test('IndexedSourceMapConsumer.hasContentsOfAllSources walks sections', () => {
+  var withContent = new SourceMapConsumer(util.indexedTestMap);
+  assert.ok(withContent.hasContentsOfAllSources());
+
+  // Strip sourcesContent from one section to force the false branch.
+  var partial = JSON.parse(JSON.stringify(util.indexedTestMap));
+  delete partial.sections[1].map.sourcesContent;
+  var withoutAll = new SourceMapConsumer(partial);
+  assert.ok(!withoutAll.hasContentsOfAllSources());
+});
+
+test('IndexedSourceMapConsumer.originalPositionFor returns nulls when needle is below all sections', () => {
+  // Build an indexed map whose first section starts at generatedLine 5
+  // so that line 1 falls below every section.
+  var shifted = JSON.parse(JSON.stringify(util.indexedTestMap));
+  shifted.sections[0].offset.line = 4;
+  shifted.sections[1].offset.line = 5;
+  var map = new SourceMapConsumer(shifted);
+
+  var pos = map.originalPositionFor({ line: 1, column: 0 });
+  assert.equal(pos.source, null);
+  assert.equal(pos.line, null);
+  assert.equal(pos.column, null);
+  assert.equal(pos.name, null);
+});
+
+test('IndexedSourceMapConsumer.generatedPositionFor returns nulls when source is in no section', () => {
+  var map = new SourceMapConsumer(util.indexedTestMap);
+  var pos = map.generatedPositionFor({
+    source: 'no-such-source.js',
+    line: 1,
+    column: 0
+  });
+  assert.equal(pos.line, null);
+  assert.equal(pos.column, null);
+});

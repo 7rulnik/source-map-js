@@ -137,3 +137,11 @@ test('test .size() with allowed duplicates', () => {
 
   assert.strictEqual(set.size(), 3);
 });
+
+test('test .at() with out-of-range index throws', () => {
+  var set = new ArraySet();
+  set.add('foo');
+  assert.throws(() => set.at(-1), /No element indexed by -1/);
+  assert.throws(() => set.at(1), /No element indexed by 1/);
+  assert.throws(() => set.at(100), /No element indexed by 100/);
+});
