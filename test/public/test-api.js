@@ -8,7 +8,7 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var sourceMap = require('../source-map');
+var sourceMap = require('../../source-map');
 
 test('test that the api is properly exposed in the top level', () => {
   assert.equal(typeof sourceMap.SourceMapGenerator, "function");

@@ -11,9 +11,9 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var base64VLQ = require('../lib/base64-vlq');
-var SourceMapConsumer = require('../lib/source-map-consumer').SourceMapConsumer;
-var SourceMapGenerator = require('../lib/source-map-generator').SourceMapGenerator;
+var base64VLQ = require('../../lib/base64-vlq');
+var SourceMapConsumer = require('../../lib/source-map-consumer').SourceMapConsumer;
+var SourceMapGenerator = require('../../lib/source-map-generator').SourceMapGenerator;
 
 // ---------------------------------------------------------------------------
 // 1. ignoreList round-trip (spec [json-ignoreList])

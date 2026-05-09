@@ -8,10 +8,11 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var SourceMapGenerator = require('../lib/source-map-generator').SourceMapGenerator;
-var SourceMapConsumer = require('../lib/source-map-consumer').SourceMapConsumer;
-var SourceNode = require('../lib/source-node').SourceNode;
-var util = require('./util');
+var sourceMap = require('../../source-map');
+var SourceMapGenerator = sourceMap.SourceMapGenerator;
+var SourceMapConsumer = sourceMap.SourceMapConsumer;
+var SourceNode = sourceMap.SourceNode;
+var util = require('../util');
 
 test('test some simple stuff', () => {
   var map = new SourceMapGenerator({

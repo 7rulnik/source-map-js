@@ -14,11 +14,11 @@ var assert = require('node:assert');
 var fs = require('node:fs');
 var path = require('node:path');
 
-var sourceMap = require('../source-map.js');
+var sourceMap = require('../../source-map.js');
 var SourceMapConsumer = sourceMap.SourceMapConsumer;
 var SourceMapGenerator = sourceMap.SourceMapGenerator;
 
-var FIXTURES_DIR = path.join(__dirname, '..', 'benchmark', 'fixtures');
+var FIXTURES_DIR = path.join(__dirname, '..', '..', 'benchmark', 'fixtures');
 
 function collectSegments(consumer) {
   var out = [];

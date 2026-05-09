@@ -8,7 +8,7 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var binarySearch = require('../lib/binary-search');
+var binarySearch = require('../../lib/binary-search');
 
 function numberCompare(a, b) {
   return a - b;

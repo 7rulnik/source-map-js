@@ -8,7 +8,7 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var libUtil = require('../lib/util');
+var libUtil = require('../../lib/util');
 
 test('test urls', () => {
   var assertUrl = function (url) {

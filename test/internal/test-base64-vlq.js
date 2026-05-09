@@ -8,7 +8,7 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var base64VLQ = require('../lib/base64-vlq');
+var base64VLQ = require('../../lib/base64-vlq');
 
 test('test normal encoding and decoding', () => {
   var result = {};

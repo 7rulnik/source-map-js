@@ -8,7 +8,7 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var base64 = require('../lib/base64');
+var base64 = require('../../lib/base64');
 
 test('test out of range encoding', () => {
   assert.throws(function () {

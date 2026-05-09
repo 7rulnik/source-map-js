@@ -8,7 +8,7 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var quickSort = require('../lib/quick-sort').quickSort;
+var quickSort = require('../../lib/quick-sort').quickSort;
 
 function numberCompare(a, b) {
   return a - b;

@@ -8,7 +8,7 @@
 var test = require('node:test').test;
 var assert = require('node:assert');
 
-var ArraySet = require('../lib/array-set').ArraySet;
+var ArraySet = require('../../lib/array-set').ArraySet;
 
 function makeTestSet() {
   var set = new ArraySet();
