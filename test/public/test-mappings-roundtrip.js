@@ -18,7 +18,7 @@ var sourceMap = require('../../source-map.js');
 var SourceMapConsumer = sourceMap.SourceMapConsumer;
 var SourceMapGenerator = sourceMap.SourceMapGenerator;
 
-var FIXTURES_DIR = path.join(__dirname, '..', '..', 'benchmark', 'fixtures');
+var FIXTURES_DIR = path.join(__dirname, '..', '..', 'benchmarks', 'jridgewell', 'fixtures');
 
 function collectSegments(consumer) {
   var out = [];
