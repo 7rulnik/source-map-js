@@ -111,3 +111,15 @@ test('BasicSourceMapConsumer sorts a large line (n>=20) whose generated columns 
   for (var j = 1; j <= 30; j++) expected.push(j);
   assert.deepStrictEqual(sortedColumns(consumer), expected);
 });
+
+// _charIsMappingSeparator is no longer used by the inline-charCodeAt parser
+// in _parseMappings, but it remains on the prototype as a documented helper
+// for subclasses / monkey-patching. Cover it directly so the prototype method
+// keeps reporting as covered.
+test('_charIsMappingSeparator returns true for ; and , and false otherwise', () => {
+  var consumer = new SourceMapConsumer(util.testMap);
+  assert.strictEqual(consumer._charIsMappingSeparator('a;b', 1), true);
+  assert.strictEqual(consumer._charIsMappingSeparator('a,b', 1), true);
+  assert.strictEqual(consumer._charIsMappingSeparator('abc', 1), false);
+  assert.strictEqual(consumer._charIsMappingSeparator('', 0), false);
+});
