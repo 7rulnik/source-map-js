@@ -18,6 +18,21 @@ var consumerModule = require('../../lib/source-map-consumer');
 var SourceMapConsumer = consumerModule.SourceMapConsumer;
 var BasicSourceMapConsumer = consumerModule.BasicSourceMapConsumer;
 var IndexedSourceMapConsumer = consumerModule.IndexedSourceMapConsumer;
+var base64VLQ = require('../../lib/base64-vlq');
+
+// Build a single-line mappings string from generated-column values.
+// Each segment is just (genColumn delta), so the resulting line has
+// `gens.length` segments whose generated columns are exactly `gens`.
+function makeUnsortedSingleLineMappings(gens) {
+  var out = '';
+  var prev = 0;
+  for (var i = 0; i < gens.length; i++) {
+    if (i > 0) out += ',';
+    out += base64VLQ.encode(gens[i] - prev);
+    prev = gens[i];
+  }
+  return out;
+}
 
 test('test that a BasicSourceMapConsumer is returned for sourcemaps without sections', () => {
   assert.ok(new SourceMapConsumer(util.testMap) instanceof BasicSourceMapConsumer);
@@ -51,4 +66,48 @@ test('IndexedSourceMapConsumer throws on unsupported version', () => {
     version: 2,
     sections: []
   }), /Unsupported version: 2/);
+});
+
+// The internal sortGenerated has three branches based on per-line segment count
+// (n==2, n<20 insertion, n>=20 quicksort) plus an early-exit for already-sorted
+// input. Real-world maps are always sorted, so these tests feed deliberately
+// out-of-order generated columns to exercise the sort branches and the
+// "found out-of-order" path of the pre-scan.
+
+function unsortedSegmentMap(generatedColumns) {
+  return {
+    version: 3,
+    sources: [],
+    names: [],
+    mappings: makeUnsortedSingleLineMappings(generatedColumns)
+  };
+}
+
+function sortedColumns(consumer) {
+  var cols = [];
+  consumer.eachMapping(function (m) { cols.push(m.generatedColumn); });
+  return cols;
+}
+
+test('BasicSourceMapConsumer sorts a 2-segment line whose generated columns are out of order', () => {
+  var map = unsortedSegmentMap([5, 2]);
+  var consumer = new SourceMapConsumer(map);
+  assert.deepStrictEqual(sortedColumns(consumer), [2, 5]);
+});
+
+test('BasicSourceMapConsumer sorts a small line (n<20) whose generated columns are out of order', () => {
+  var unsorted = [10, 2, 7, 1, 9, 3, 8, 4, 6, 5];
+  var map = unsortedSegmentMap(unsorted);
+  var consumer = new SourceMapConsumer(map);
+  assert.deepStrictEqual(sortedColumns(consumer), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+});
+
+test('BasicSourceMapConsumer sorts a large line (n>=20) whose generated columns are out of order', () => {
+  var unsorted = [];
+  for (var i = 30; i >= 1; i--) unsorted.push(i);
+  var map = unsortedSegmentMap(unsorted);
+  var consumer = new SourceMapConsumer(map);
+  var expected = [];
+  for (var j = 1; j <= 30; j++) expected.push(j);
+  assert.deepStrictEqual(sortedColumns(consumer), expected);
 });
