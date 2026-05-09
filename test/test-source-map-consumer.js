@@ -436,6 +436,36 @@ test('test that we can get the original source content for the sources on an ind
   }, Error);
 });
 
+test('test sourceContentFor returnNullOnMissing on basic source map', () => {
+  var map = new SourceMapConsumer(util.testMapWithSourcesContent);
+
+  assert.equal(map.sourceContentFor("one.js", true),
+               ' ONE.foo = function (bar) {\n   return baz(bar);\n };');
+  assert.equal(map.sourceContentFor("", true), null);
+  assert.equal(map.sourceContentFor("/the/root/three.js", true), null);
+  assert.equal(map.sourceContentFor("three.js", true), null);
+});
+
+test('test sourceContentFor returnNullOnMissing on basic source map with relative sources', () => {
+  var map = new SourceMapConsumer(util.testMapRelativeSources);
+
+  assert.equal(map.sourceContentFor("one.js", true),
+               ' ONE.foo = function (bar) {\n   return baz(bar);\n };');
+  assert.equal(map.sourceContentFor("", true), null);
+  assert.equal(map.sourceContentFor("/the/root/three.js", true), null);
+  assert.equal(map.sourceContentFor("three.js", true), null);
+});
+
+test('test sourceContentFor returnNullOnMissing on indexed source map', () => {
+  var map = new SourceMapConsumer(util.indexedTestMap);
+
+  assert.equal(map.sourceContentFor("one.js", true),
+               ' ONE.foo = function (bar) {\n   return baz(bar);\n };');
+  assert.equal(map.sourceContentFor("", true), null);
+  assert.equal(map.sourceContentFor("/the/root/three.js", true), null);
+  assert.equal(map.sourceContentFor("three.js", true), null);
+});
+
 test('test hasContentsOfAllSources, single source with contents', () => {
   // Has one source: foo.js (with contents).
   var mapWithContents = new SourceMapGenerator();
