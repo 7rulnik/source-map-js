@@ -10,7 +10,7 @@ import {
   traceSegment,
   generatedPositionFor as traceMappingGeneratedPositionFor,
 } from '@jridgewell/trace-mapping';
-import currentSourceMap from '../source-map.js';
+import currentSourceMap from '../../source-map.js';
 import { SourceMapConsumer as SourceMapConsumerJsLatest } from 'source-map-js-latest';
 import { SourceMapConsumer as SourceMapConsumer061 } from 'source-map';
 import { SourceMapConsumer as SourceMapConsumerWasm } from 'source-map-wasm';

@@ -13,7 +13,7 @@ if (typeof print !== "function") {
 
 load(__dirname + "/scalajs-runtime-sourcemap.js");
 load(__dirname + "/stats.js");
-load(__dirname + "/../dist/source-map.js");
+global.sourceMap = require(__dirname + "/../../source-map.js");
 load(__dirname + "/bench.js");
 
 print("Parsing source map");

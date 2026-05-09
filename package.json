@@ -60,12 +60,11 @@
     "test:internal": "node --test 'test/internal/test-*.js'",
     "test:conformance": "node --test 'test/conformance/test-*.js'",
     "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=98 --test-coverage-branches=97 --test-coverage-functions=96 'test/**/test-*.js'",
-    "build": "webpack build --config webpack.config.js",
     "toc": "doctoc --title '## Table of Contents' README.md && doctoc --title '## Table of Contents' CONTRIBUTING.md",
-    "bench": "yarn run build && node --max-old-space-size=8192 bench/bench-shell-bindings.js",
-    "bench-web": "webpack build --config bench-web/webpack.config.js && serve ./bench-web",
-    "bench:trace": "node --expose-gc --max-old-space-size=8192 benchmark/trace.mjs",
-    "bench:generate": "node --expose-gc --max-old-space-size=8192 benchmark/generate.mjs"
+    "bench:mozilla-0.6.1": "node --max-old-space-size=8192 benchmarks/mozilla-0.6.1/bench-shell-bindings.js",
+    "bench:mozilla-master": "node --max-old-space-size=8192 benchmarks/mozilla-master/bench-cli.js",
+    "bench:jridgewell:trace": "node --expose-gc --max-old-space-size=8192 benchmarks/jridgewell/trace.mjs",
+    "bench:jridgewell:generate": "node --expose-gc --max-old-space-size=8192 benchmarks/jridgewell/generate.mjs"
   },
   "devDependencies": {
     "@jridgewell/gen-mapping": "^0.3.5",
@@ -74,12 +73,9 @@
     "benchmark": "^2.1.4",
     "clean-publish": "^3.1.0",
     "doctoc": "^0.15.0",
-    "serve": "^14.2.5",
     "source-map": "0.6.1",
     "source-map-js-latest": "npm:source-map-js@latest",
-    "source-map-wasm": "npm:source-map@0.8.0-beta.0",
-    "webpack": "^5.104.1",
-    "webpack-cli": "^6.0.1"
+    "source-map-wasm": "npm:source-map@0.8.0-beta.0"
   },
   "clean-publish": {
     "cleanDocs": true

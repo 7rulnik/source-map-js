@@ -12,7 +12,7 @@ import {
   toEncodedMap,
   toDecodedMap,
 } from '@jridgewell/gen-mapping';
-import currentSourceMap from '../source-map.js';
+import currentSourceMap from '../../source-map.js';
 import { SourceMapGenerator as SourceMapGeneratorJsLatest } from 'source-map-js-latest';
 import { SourceMapGenerator as SourceMapGenerator061 } from 'source-map';
 import { SourceMapGenerator as SourceMapGeneratorWasm } from 'source-map-wasm';
