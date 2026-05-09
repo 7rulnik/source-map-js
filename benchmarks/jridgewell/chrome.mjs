@@ -107,6 +107,7 @@ SourceMap.prototype = {
    */
   findEntryReversed(sourceURL, lineNumber) {
     const mappings = this._reverseMappingsBySourceURL[sourceURL];
+    if (!mappings) return this._mappings[0];
     for (; lineNumber < mappings.length; ++lineNumber) {
       const mapping = mappings[lineNumber];
       if (mapping) return mapping;
