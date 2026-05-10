@@ -20,7 +20,17 @@ import { SourceMap as ChromeMap2026 } from './chrome-2026.mjs';
 const { SourceMapConsumer: CurrentSourceMapConsumer } = currentSourceMap;
 
 const dir = relative(process.cwd(), join(dirname(fileURLToPath(import.meta.url)), 'fixtures'));
-const { DIFF, FILE } = process.env;
+const { DIFF, FILE, SOLO, PHASES } = process.env;
+
+// SOLO=1: only benchmark `source-map-js current` (skip every third-party
+// case). bench-delta.js only diffs that label across two runs, so the rest is
+// pure runtime tax for bench-diff.sh.
+//
+// PHASES=key1,key2: only run the named Benchmark.Suite phases. Keys:
+//   init, trace-random, trace-ascending, genpos-init, genpos-speed
+// Default (unset) runs all phases.
+const phasesSet = PHASES ? new Set(PHASES.split(',').map((s) => s.trim())) : null;
+const phaseEnabled = (key) => !phasesSet || phasesSet.has(key);
 
 console.log(`node ${process.version}\n`);
 
@@ -73,7 +83,9 @@ async function bench(file) {
   const firstSource = smcjsCurrent.sources[0];
   smcjsCurrent.generatedPositionFor({ source: firstSource, line: 1, column: 0 });
 
-  if (DIFF) {
+  if (SOLO) {
+    // skip all comparison libraries
+  } else if (DIFF) {
     smcjsLatest = await track('source-map-js latest', results, () => {
       const smc = new SourceMapConsumerJsLatest(encodedMapData);
       smc.originalPositionFor({ line: 1, column: 0 });
@@ -123,60 +135,65 @@ async function bench(file) {
 
   console.log('');
 
-  console.log('Init speed:');
-  benchmark = new Benchmark.Suite()
-    .add('source-map-js current: encoded JSON input', () => {
-      new CurrentSourceMapConsumer(encodedMapDataJson).originalPositionFor({ line: 1, column: 0 });
-    })
-    .add('source-map-js current: encoded Object input', () => {
-      new CurrentSourceMapConsumer(encodedMapData).originalPositionFor({ line: 1, column: 0 });
-    });
-  if (DIFF) {
-    benchmark = benchmark
-      .add('source-map-js latest:  encoded JSON input', () => {
-        new SourceMapConsumerJsLatest(encodedMapDataJson).originalPositionFor({ line: 1, column: 0 });
+  if (phaseEnabled('init')) {
+    console.log('Init speed:');
+    benchmark = new Benchmark.Suite()
+      .add('source-map-js current: encoded JSON input', () => {
+        new CurrentSourceMapConsumer(encodedMapDataJson).originalPositionFor({ line: 1, column: 0 });
       })
-      .add('source-map-js latest:  encoded Object input', () => {
-        new SourceMapConsumerJsLatest(encodedMapData).originalPositionFor({ line: 1, column: 0 });
+      .add('source-map-js current: encoded Object input', () => {
+        new CurrentSourceMapConsumer(encodedMapData).originalPositionFor({ line: 1, column: 0 });
       });
-  } else {
-    benchmark = benchmark
-      .add('trace-mapping:    decoded JSON input', () => {
-        traceSegment(new TraceMap(decodedMapDataJson), 0, 0);
+    if (SOLO) {
+      // only source-map-js current
+    } else if (DIFF) {
+      benchmark = benchmark
+        .add('source-map-js latest:  encoded JSON input', () => {
+          new SourceMapConsumerJsLatest(encodedMapDataJson).originalPositionFor({ line: 1, column: 0 });
+        })
+        .add('source-map-js latest:  encoded Object input', () => {
+          new SourceMapConsumerJsLatest(encodedMapData).originalPositionFor({ line: 1, column: 0 });
+        });
+    } else {
+      benchmark = benchmark
+        .add('trace-mapping:    decoded JSON input', () => {
+          traceSegment(new TraceMap(decodedMapDataJson), 0, 0);
+        })
+        .add('trace-mapping:    encoded JSON input', () => {
+          traceSegment(new TraceMap(encodedMapDataJson), 0, 0);
+        })
+        .add('trace-mapping:    decoded Object input', () => {
+          traceSegment(new TraceMap(decodedMapData), 0, 0);
+        })
+        .add('trace-mapping:    encoded Object input', () => {
+          traceSegment(new TraceMap(encodedMapData), 0, 0);
+        })
+        .add('source-map-0.6.1: encoded Object input', () => {
+          new SourceMapConsumer061(encodedMapData).originalPositionFor({ line: 1, column: 0 });
+        })
+        .add('Chrome dev tools: encoded Object input', () => {
+          new ChromeMap('url', encodedMapData).findEntry(0, 0);
+        })
+        .add('Chrome dev tools 2026: encoded Object input', () => {
+          new ChromeMap2026('url', encodedMapData).findEntry(0, 0);
+        });
+      // WASM isn't tested in init because its async and OOMs.
+      // .add('source-map-0.8.0: encoded Object input', () => { })
+    }
+    benchmark
+      .on('error', (event) => console.error(event.target.error))
+      .on('cycle', (event) => {
+        console.log(String(event.target));
       })
-      .add('trace-mapping:    encoded JSON input', () => {
-        traceSegment(new TraceMap(encodedMapDataJson), 0, 0);
+      .on('complete', function () {
+        console.log('Fastest is ' + this.filter('fastest').map('name'));
       })
-      .add('trace-mapping:    decoded Object input', () => {
-        traceSegment(new TraceMap(decodedMapData), 0, 0);
-      })
-      .add('trace-mapping:    encoded Object input', () => {
-        traceSegment(new TraceMap(encodedMapData), 0, 0);
-      })
-      .add('source-map-0.6.1: encoded Object input', () => {
-        new SourceMapConsumer061(encodedMapData).originalPositionFor({ line: 1, column: 0 });
-      })
-      .add('Chrome dev tools: encoded Object input', () => {
-        new ChromeMap('url', encodedMapData).findEntry(0, 0);
-      })
-      .add('Chrome dev tools 2026: encoded Object input', () => {
-        new ChromeMap2026('url', encodedMapData).findEntry(0, 0);
-      });
-    // WASM isn't tested in init because its async and OOMs.
-    // .add('source-map-0.8.0: encoded Object input', () => { })
+      .run({});
+
+    console.log('');
   }
-  benchmark
-    .on('error', (event) => console.error(event.target.error))
-    .on('cycle', (event) => {
-      console.log(String(event.target));
-    })
-    .on('complete', function () {
-      console.log('Fastest is ' + this.filter('fastest').map('name'));
-    })
-    .run({});
 
-  console.log('');
-
+  if (phaseEnabled('trace-random')) {
   console.log('Trace speed (random):');
   benchmark = new Benchmark.Suite()
     .add('source-map-js current: encoded originalPositionFor', () => {
@@ -190,7 +207,9 @@ async function bench(file) {
         smcjsCurrent.originalPositionFor({ line: i + 1, column });
       }
     });
-  if (DIFF) {
+  if (SOLO) {
+    // only source-map-js current
+  } else if (DIFF) {
     benchmark = benchmark.add('source-map-js latest: encoded originalPositionFor', () => {
       const i = Math.floor(Math.random() * lines.length);
       const line = lines[i];
@@ -271,7 +290,9 @@ async function bench(file) {
     .run({});
 
   console.log('');
+  }
 
+  if (phaseEnabled('trace-ascending')) {
   console.log('Trace speed (ascending):');
   benchmark = new Benchmark.Suite()
     .add('source-map-js current: encoded originalPositionFor', () => {
@@ -284,7 +305,9 @@ async function bench(file) {
         smcjsCurrent.originalPositionFor({ line: i + 1, column });
       }
     });
-  if (DIFF) {
+  if (SOLO) {
+    // only source-map-js current
+  } else if (DIFF) {
     benchmark = benchmark.add('source-map-js latest: encoded originalPositionFor', () => {
       const i = Math.floor(Math.random() * lines.length);
       const line = lines[i];
@@ -359,14 +382,18 @@ async function bench(file) {
     .run({});
 
   console.log('');
+  }
 
+  if (phaseEnabled('genpos-init')) {
   console.log('Generated Positions init:');
   benchmark = new Benchmark.Suite()
     .add('source-map-js current: encoded generatedPositionFor', () => {
       const smc = new CurrentSourceMapConsumer(encodedMapData);
       smc.generatedPositionFor({ source: firstSource, line: 6, column: 0 });
     });
-  if (DIFF) {
+  if (SOLO) {
+    // only source-map-js current
+  } else if (DIFF) {
     benchmark = benchmark.add('source-map-js latest: encoded generatedPositionFor', () => {
       const smc = new SourceMapConsumerJsLatest(encodedMapData);
       smc.generatedPositionFor({ source: firstSource, line: 6, column: 0 });
@@ -407,7 +434,9 @@ async function bench(file) {
     .run({});
 
   console.log('');
+  }
 
+  if (phaseEnabled('genpos-speed')) {
   console.log('Generated Positions speed:');
   benchmark = new Benchmark.Suite()
     .add('source-map-js current: encoded generatedPositionFor', () => {
@@ -415,7 +444,9 @@ async function bench(file) {
         smcjsCurrent.generatedPositionFor({ source, line: 6, column: 0 });
       }
     });
-  if (DIFF) {
+  if (SOLO) {
+    // only source-map-js current
+  } else if (DIFF) {
     benchmark = benchmark.add('source-map-js latest: encoded generatedPositionFor', () => {
       for (const source of smcjsLatest.sources) {
         smcjsLatest.generatedPositionFor({ source, line: 6, column: 0 });
@@ -458,6 +489,7 @@ async function bench(file) {
       console.log('Fastest is ' + this.filter('fastest').map('name'));
     })
     .run({});
+  }
 
   if (smcWasm) smcWasm.destroy();
 }
