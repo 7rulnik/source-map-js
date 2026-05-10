@@ -3,5 +3,6 @@
 .idea
 node_modules/*
 dist
+tmp/
 
 .yarn/install-state.gz
