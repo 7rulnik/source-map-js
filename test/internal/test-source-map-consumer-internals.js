@@ -112,6 +112,32 @@ test('BasicSourceMapConsumer sorts a large line (n>=20) whose generated columns 
   assert.deepStrictEqual(sortedColumns(consumer), expected);
 });
 
+// _buildOriginalMappings groups parsed mappings by source and then sorts each
+// group by original position. The skip-sorted check short-circuits when the
+// per-source array is already in original order. Real-world maps usually are,
+// so we craft one where two segments share a generated line and source but
+// have decreasing original lines — guaranteeing the per-source array comes
+// out of original-position order and forcing the actual quickSort call.
+test('BasicSourceMapConsumer sorts originalMappings when generated and original orders disagree', () => {
+  // Segment 1: genCol=0, srcIdx=0, origLineDelta=10 (→ origLine 11), origCol=0
+  // Segment 2: genColDelta=5, srcIdxDelta=0, origLineDelta=-5 (→ origLine 6), origCol=0
+  var seg1 = base64VLQ.encode(0) + base64VLQ.encode(0)
+           + base64VLQ.encode(10) + base64VLQ.encode(0);
+  var seg2 = base64VLQ.encode(5) + base64VLQ.encode(0)
+           + base64VLQ.encode(-5) + base64VLQ.encode(0);
+  var consumer = new SourceMapConsumer({
+    version: 3,
+    sources: ['x.js'],
+    names: [],
+    mappings: seg1 + ',' + seg2
+  });
+
+  var lines = [];
+  consumer.eachMapping(function (m) { lines.push(m.originalLine); },
+                       null, SourceMapConsumer.ORIGINAL_ORDER);
+  assert.deepStrictEqual(lines, [6, 11]);
+});
+
 // _charIsMappingSeparator is no longer used by the inline-charCodeAt parser
 // in _parseMappings, but it remains on the prototype as a documented helper
 // for subclasses / monkey-patching. Cover it directly so the prototype method
