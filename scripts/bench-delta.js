@@ -21,6 +21,8 @@ const SUITE_HEADERS = new Set([
   'Trace speed (ascending)',
   'Generated Positions init',
   'Generated Positions speed',
+  'eachMapping speed (generated order)',
+  'eachMapping speed (original order)',
   'Adding speed',
   'Generate speed',
 ]);
@@ -45,8 +47,8 @@ function parse(text) {
       continue;
     }
 
-    // Suite header: e.g. "Init speed:"
-    m = /^([A-Z][\w()\s]+):\s*$/.exec(line);
+    // Suite header: e.g. "Init speed:" or "eachMapping speed (generated order):"
+    m = /^([A-Za-z][\w()\s]+):\s*$/.exec(line);
     if (m && SUITE_HEADERS.has(m[1])) { suite = m[1]; continue; }
 
     // Result line: "source-map-js current[:] <op> x 3,398 ops/sec ..."
