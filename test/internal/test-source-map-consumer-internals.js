@@ -170,6 +170,69 @@ test('IndexedSourceMapConsumer sorts per-source originalMappings when bucket is 
   assert.deepStrictEqual(lines, [6, 11]);
 });
 
+// BasicSourceMapConsumer.fromSourceMap reads the generator's MappingList
+// slab directly. The srcIdx === -1 branch (source-less generated mapping)
+// isn't covered by the standard fromSourceMap tests since they all add
+// mappings with sources. Exercise it here to pin the slab read shape for
+// the source-less case.
+// applySourceMap walks the generator's MappingList slab. The
+// `srcIdx === -1` branch on line 253 (source-less mapping going through
+// applySourceMap) was uncovered — all existing applySourceMap tests use
+// fully-sourced mappings. Pin the pass-through behavior here.
+test('SourceMapGenerator.applySourceMap passes source-less mappings through unchanged', () => {
+  // Inner map: x.js → y.js
+  var inner = new SourceMapGenerator({ file: 'x.js' });
+  inner.addMapping({
+    source: 'y.js',
+    original:  { line: 1, column: 0 },
+    generated: { line: 1, column: 0 }
+  });
+  var innerConsumer = new SourceMapConsumer(inner.toJSON());
+
+  // Outer generator has a source-less mapping alongside an x.js mapping.
+  var outer = new SourceMapGenerator({ file: 'foo.js' });
+  outer.addMapping({ generated: { line: 1, column: 0 } });  // source-less
+  outer.addMapping({
+    source:    'x.js',
+    original:  { line: 1, column: 0 },
+    generated: { line: 1, column: 5 }
+  });
+
+  outer.applySourceMap(innerConsumer);
+
+  var result = new SourceMapConsumer(outer.toJSON());
+  var seen = [];
+  result.eachMapping(function (m) {
+    seen.push({ gc: m.generatedColumn, src: m.source });
+  });
+  assert.deepStrictEqual(seen, [
+    { gc: 0, src: null },   // source-less mapping survives unchanged
+    { gc: 5, src: 'y.js' }  // x.js mapping got transformed via inner
+  ]);
+});
+
+test('BasicSourceMapConsumer.fromSourceMap handles source-less mappings', () => {
+  var smg = new SourceMapGenerator({ file: 'foo.js' });
+  // Case-1 mapping per _validateMapping: only generated position.
+  smg.addMapping({ generated: { line: 1, column: 0 } });
+  smg.addMapping({
+    source:    'x.js',
+    original:  { line: 1, column: 0 },
+    generated: { line: 1, column: 5 }
+  });
+
+  var smc = SourceMapConsumer.fromSourceMap(smg);
+  // Source-less mapping survives the round-trip with source/name null.
+  var lines = [];
+  smc.eachMapping(function (m) {
+    lines.push({ gc: m.generatedColumn, src: m.source, name: m.name });
+  });
+  assert.deepStrictEqual(lines, [
+    { gc: 0, src: null, name: null },
+    { gc: 5, src: 'x.js', name: null }
+  ]);
+});
+
 // BasicSourceMapConsumer.fromSourceMap buckets original-side mappings by
 // source and sorts each bucket with compareByOriginalPositionsNoSource.
 // MappingList stores mappings in generated-position order, so we need two

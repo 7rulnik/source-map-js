@@ -362,6 +362,14 @@ test('compareByGeneratedPositionsInflated compares source, original, name', () =
   var cmp = libUtil.compareByGeneratedPositionsInflated;
   var base = mapping({});
 
+  // Differ on generatedLine — primary key; integration tests previously
+  // hit this branch via MappingList.add, but the slab-backed rewrite
+  // doesn't call this comparator any more, so it's pinned directly here.
+  assert.ok(cmp(mapping({ generatedLine: 2 }), base) > 0);
+
+  // Differ on generatedColumn — secondary key with the same rationale.
+  assert.ok(cmp(mapping({ generatedColumn: 1 }), base) > 0);
+
   // Differ on source.
   assert.ok(cmp(mapping({ source: 'b.js' }), mapping({ source: 'a.js' })) > 0);
 
