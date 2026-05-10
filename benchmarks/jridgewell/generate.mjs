@@ -20,7 +20,16 @@ import { SourceMapGenerator as SourceMapGeneratorWasm } from 'source-map-wasm';
 const { SourceMapGenerator: CurrentSourceMapGenerator } = currentSourceMap;
 
 const dir = relative(process.cwd(), join(dirname(fileURLToPath(import.meta.url)), 'fixtures'));
-const { DIFF, FILE } = process.env;
+const { DIFF, FILE, SOLO, PHASES } = process.env;
+
+// SOLO=1: only benchmark `source-map-js current` (skip every third-party
+// case). bench-delta.js only diffs that label across two runs.
+//
+// PHASES=key1,key2: only run the named Benchmark.Suite phases. Keys:
+//   adding, generate
+// Default (unset) runs all phases.
+const phasesSet = PHASES ? new Set(PHASES.split(',').map((s) => s.trim())) : null;
+const phaseEnabled = (key) => !phasesSet || phasesSet.has(key);
 
 console.log(`node ${process.version}\n`);
 
@@ -110,7 +119,9 @@ async function bench(file) {
   });
 
   let genmap, smgjsLatest, smg061, smgWasm;
-  if (DIFF) {
+  if (SOLO) {
+    // skip all comparison libraries
+  } else if (DIFF) {
     smgjsLatest = track('source-map-js latest', results, () => {
       return buildSourceMapJsGenerator(SourceMapGeneratorJsLatest, mappings, sources, names);
     });
@@ -172,11 +183,14 @@ async function bench(file) {
 
   console.log('');
 
+  if (phaseEnabled('adding')) {
   console.log('Adding speed:');
   let suite = new Benchmark.Suite().add('source-map-js current: addMapping', () => {
     buildSourceMapJsGenerator(CurrentSourceMapGenerator, mappings, sources, names);
   });
-  if (DIFF) {
+  if (SOLO) {
+    // only source-map-js current
+  } else if (DIFF) {
     suite = suite.add('source-map-js latest:  addMapping', () => {
       buildSourceMapJsGenerator(SourceMapGeneratorJsLatest, mappings, sources, names);
     });
@@ -239,12 +253,16 @@ async function bench(file) {
     .run({});
 
   console.log('');
+  }
 
+  if (phaseEnabled('generate')) {
   console.log('Generate speed:');
   let genSuite = new Benchmark.Suite().add('source-map-js current: encoded output', () => {
     smgjsCurrent.toJSON();
   });
-  if (DIFF) {
+  if (SOLO) {
+    // only source-map-js current
+  } else if (DIFF) {
     genSuite = genSuite.add('source-map-js latest:  encoded output', () => {
       smgjsLatest.toJSON();
     });
@@ -272,6 +290,7 @@ async function bench(file) {
       console.log('Fastest is ' + this.filter('fastest').map('name'));
     })
     .run({});
+  }
 }
 
 async function run(files) {
