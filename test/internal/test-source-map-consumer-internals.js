@@ -19,6 +19,7 @@ var SourceMapConsumer = consumerModule.SourceMapConsumer;
 var BasicSourceMapConsumer = consumerModule.BasicSourceMapConsumer;
 var IndexedSourceMapConsumer = consumerModule.IndexedSourceMapConsumer;
 var base64VLQ = require('../../lib/base64-vlq');
+var SourceMapGenerator = require('../../lib/source-map-generator').SourceMapGenerator;
 
 // Build a single-line mappings string from generated-column values.
 // Each segment is just (genColumn delta), so the resulting line has
@@ -163,6 +164,32 @@ test('IndexedSourceMapConsumer sorts per-source originalMappings when bucket is 
     ]
   });
 
+  var lines = [];
+  consumer.eachMapping(function (m) { lines.push(m.originalLine); },
+                       null, SourceMapConsumer.ORIGINAL_ORDER);
+  assert.deepStrictEqual(lines, [6, 11]);
+});
+
+// BasicSourceMapConsumer.fromSourceMap buckets original-side mappings by
+// source and sorts each bucket with compareByOriginalPositionsNoSource.
+// MappingList stores mappings in generated-position order, so we need two
+// mappings on the same source whose original positions decrease as their
+// generated columns increase — that produces an out-of-order bucket and
+// forces the quickSort fallback.
+test('BasicSourceMapConsumer.fromSourceMap sorts per-source originalMappings when bucket is out of order', () => {
+  var smg = new SourceMapGenerator({ file: 'foo.js' });
+  smg.addMapping({
+    source:    'x.js',
+    original:  { line: 11, column: 0 },
+    generated: { line:  1, column: 0 }
+  });
+  smg.addMapping({
+    source:    'x.js',
+    original:  { line:  6, column: 0 },
+    generated: { line:  1, column: 5 }
+  });
+
+  var consumer = SourceMapConsumer.fromSourceMap(smg);
   var lines = [];
   consumer.eachMapping(function (m) { lines.push(m.originalLine); },
                        null, SourceMapConsumer.ORIGINAL_ORDER);
