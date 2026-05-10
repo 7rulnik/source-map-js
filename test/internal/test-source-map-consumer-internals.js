@@ -170,6 +170,33 @@ test('IndexedSourceMapConsumer sorts per-source originalMappings when bucket is 
   assert.deepStrictEqual(lines, [6, 11]);
 });
 
+// BasicSourceMapConsumer.fromSourceMap reads the generator's MappingList
+// slab directly. The srcIdx === -1 branch (source-less generated mapping)
+// isn't covered by the standard fromSourceMap tests since they all add
+// mappings with sources. Exercise it here to pin the slab read shape for
+// the source-less case.
+test('BasicSourceMapConsumer.fromSourceMap handles source-less mappings', () => {
+  var smg = new SourceMapGenerator({ file: 'foo.js' });
+  // Case-1 mapping per _validateMapping: only generated position.
+  smg.addMapping({ generated: { line: 1, column: 0 } });
+  smg.addMapping({
+    source:    'x.js',
+    original:  { line: 1, column: 0 },
+    generated: { line: 1, column: 5 }
+  });
+
+  var smc = SourceMapConsumer.fromSourceMap(smg);
+  // Source-less mapping survives the round-trip with source/name null.
+  var lines = [];
+  smc.eachMapping(function (m) {
+    lines.push({ gc: m.generatedColumn, src: m.source, name: m.name });
+  });
+  assert.deepStrictEqual(lines, [
+    { gc: 0, src: null, name: null },
+    { gc: 5, src: 'x.js', name: null }
+  ]);
+});
+
 // BasicSourceMapConsumer.fromSourceMap buckets original-side mappings by
 // source and sorts each bucket with compareByOriginalPositionsNoSource.
 // MappingList stores mappings in generated-position order, so we need two
