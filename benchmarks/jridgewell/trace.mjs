@@ -27,7 +27,8 @@ const { DIFF, FILE, SOLO, PHASES } = process.env;
 // pure runtime tax for bench-diff.sh.
 //
 // PHASES=key1,key2: only run the named Benchmark.Suite phases. Keys:
-//   init, trace-random, trace-ascending, genpos-init, genpos-speed
+//   init, trace-random, trace-ascending, genpos-init, genpos-speed,
+//   eachmapping-generated, eachmapping-original
 // Default (unset) runs all phases.
 const phasesSet = PHASES ? new Set(PHASES.split(',').map((s) => s.trim())) : null;
 const phaseEnabled = (key) => !phasesSet || phasesSet.has(key);
@@ -478,6 +479,74 @@ async function bench(file) {
         for (const source of chromeMap2026.sources()) {
           chromeMap2026.findEntryReversed(source, 6);
         }
+      });
+  }
+  benchmark
+    .on('error', (event) => console.error(event.target.error))
+    .on('cycle', (event) => {
+      console.log(String(event.target));
+    })
+    .on('complete', function () {
+      console.log('Fastest is ' + this.filter('fastest').map('name'));
+    })
+    .run({});
+  }
+
+  // eachMapping phases iterate every parsed mapping and run a no-op callback,
+  // measuring per-mapping iteration cost (source URL resolution + name lookup
+  // + result-object construction). Pre-built `_generatedMappings` and
+  // `_originalMappings` from the Memory Usage / Init / Generated Positions
+  // calls above carry over, so the build cost isn't included.
+  const NOOP = () => {};
+
+  if (phaseEnabled('eachmapping-generated')) {
+  console.log('eachMapping speed (generated order):');
+  benchmark = new Benchmark.Suite()
+    .add('source-map-js current: encoded eachMapping', () => {
+      smcjsCurrent.eachMapping(NOOP);
+    });
+  if (SOLO) {
+    // only source-map-js current
+  } else if (DIFF) {
+    benchmark = benchmark.add('source-map-js latest: encoded eachMapping', () => {
+      smcjsLatest.eachMapping(NOOP);
+    });
+  } else {
+    benchmark = benchmark
+      .add('source-map-0.6.1: encoded eachMapping', () => {
+        smc061.eachMapping(NOOP);
+      });
+  }
+  benchmark
+    .on('error', (event) => console.error(event.target.error))
+    .on('cycle', (event) => {
+      console.log(String(event.target));
+    })
+    .on('complete', function () {
+      console.log('Fastest is ' + this.filter('fastest').map('name'));
+    })
+    .run({});
+
+  console.log('');
+  }
+
+  if (phaseEnabled('eachmapping-original')) {
+  console.log('eachMapping speed (original order):');
+  const ORIG = CurrentSourceMapConsumer.ORIGINAL_ORDER;
+  benchmark = new Benchmark.Suite()
+    .add('source-map-js current: encoded eachMapping', () => {
+      smcjsCurrent.eachMapping(NOOP, null, ORIG);
+    });
+  if (SOLO) {
+    // only source-map-js current
+  } else if (DIFF) {
+    benchmark = benchmark.add('source-map-js latest: encoded eachMapping', () => {
+      smcjsLatest.eachMapping(NOOP, null, SourceMapConsumerJsLatest.ORIGINAL_ORDER);
+    });
+  } else {
+    benchmark = benchmark
+      .add('source-map-0.6.1: encoded eachMapping', () => {
+        smc061.eachMapping(NOOP, null, SourceMapConsumer061.ORIGINAL_ORDER);
       });
   }
   benchmark
