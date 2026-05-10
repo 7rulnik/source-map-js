@@ -138,6 +138,37 @@ test('BasicSourceMapConsumer sorts originalMappings when generated and original 
   assert.deepStrictEqual(lines, [6, 11]);
 });
 
+// IndexedSourceMapConsumer._parseMappings buckets original-side mappings by
+// source and sorts each bucket with compareByOriginalPositionsNoSource. The
+// skip-sorted check short-circuits for the common in-order case; this test
+// crafts a section whose per-source bucket comes out of original-position
+// order, forcing the actual quickSort fallback.
+test('IndexedSourceMapConsumer sorts per-source originalMappings when bucket is out of order', () => {
+  var seg1 = base64VLQ.encode(0) + base64VLQ.encode(0)
+           + base64VLQ.encode(10) + base64VLQ.encode(0);
+  var seg2 = base64VLQ.encode(5) + base64VLQ.encode(0)
+           + base64VLQ.encode(-5) + base64VLQ.encode(0);
+  var consumer = new SourceMapConsumer({
+    version: 3,
+    sections: [
+      {
+        offset: { line: 0, column: 0 },
+        map: {
+          version: 3,
+          sources: ['x.js'],
+          names: [],
+          mappings: seg1 + ',' + seg2
+        }
+      }
+    ]
+  });
+
+  var lines = [];
+  consumer.eachMapping(function (m) { lines.push(m.originalLine); },
+                       null, SourceMapConsumer.ORIGINAL_ORDER);
+  assert.deepStrictEqual(lines, [6, 11]);
+});
+
 // _charIsMappingSeparator is no longer used by the inline-charCodeAt parser
 // in _parseMappings, but it remains on the prototype as a documented helper
 // for subclasses / monkey-patching. Cover it directly so the prototype method
