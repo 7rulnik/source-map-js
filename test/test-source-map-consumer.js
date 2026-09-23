@@ -895,6 +895,63 @@ exports['test indexed source map errors when sections are out of order by line']
   }, Error);
 };
 
+// CVE-2026-93749: source-map-js failed to validate the per-section
+// `offset.line`/`offset.column` values in indexed source maps, letting an
+// attacker supply extremely large (or non-finite/non-integer) offset values
+// that cause synchronous, near-unbounded looping in downstream consumers
+// (e.g. SourceNode.fromStringWithSourceMap), blocking the event loop.
+exports['test indexed source map rejects unreasonably large section offsets (CVE-2026-93749)'] = function(assert) {
+  var badOffsets = [
+    Infinity,
+    -Infinity,
+    NaN,
+    1e9,
+    2e6 + 1, // just over the allowed maximum
+    -1,
+    1.5,
+    '5', // not a number
+    null
+  ];
+
+  badOffsets.forEach(function(offsetLine) {
+    var map = JSON.parse(JSON.stringify(util.indexedTestMap));
+    map.sections[0].offset = {
+      line: offsetLine,
+      column: 0
+    };
+
+    assert.throws(function() {
+      new SourceMapConsumer(map);
+    }, Error, 'offset.line = ' + offsetLine + ' should be rejected');
+  });
+
+  // Bad offset.column values should be rejected the same way.
+  var badColumns = [Infinity, NaN, 2e6 + 1, -1, 1.5, '5'];
+  badColumns.forEach(function(offsetColumn) {
+    var map = JSON.parse(JSON.stringify(util.indexedTestMap));
+    map.sections[0].offset = {
+      line: 0,
+      column: offsetColumn
+    };
+
+    assert.throws(function() {
+      new SourceMapConsumer(map);
+    }, Error, 'offset.column = ' + offsetColumn + ' should be rejected');
+  });
+};
+
+exports['test indexed source map accepts valid, reasonably-sized section offsets'] = function(assert) {
+  var map = JSON.parse(JSON.stringify(util.indexedTestMap));
+  map.sections[0].offset = {
+    line: 0,
+    column: 0
+  };
+
+  assert.doesNotThrow(function() {
+    new SourceMapConsumer(map);
+  });
+};
+
 exports['test github issue #64'] = function (assert) {
   var map = new SourceMapConsumer({
     "version": 3,
