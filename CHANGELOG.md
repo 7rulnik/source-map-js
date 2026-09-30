@@ -2,6 +2,8 @@
 
 ## 1.2.2
 
+* Fix crash when executing in browser with CSP script-src that don't permit unsafe-eval ([#29](https://github.com/7rulnik/source-map-js/pull/29)) [@xfournet](https://github.com/xfournet)
+
 * Fix denial of service from malicious indexed source maps (CVE-2026-93749) ([#79](https://github.com/7rulnik/source-map-js/pull/79))
 
   Reported by [@waydeshi](https://github.com/waydeshi) in [#76](https://github.com/7rulnik/source-map-js/issues/76). A fix was also proposed by [@aniebiet](https://github.com/aniebiet) in [#78](https://github.com/7rulnik/source-map-js/pull/78).
