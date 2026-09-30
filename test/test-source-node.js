@@ -274,6 +274,43 @@ exports['test .fromStringWithSourceMap() complex version'] = forEachNewline(func
   util.assertEqualMaps(assert, map, inputMap);
 });
 
+exports['test .fromStringWithSourceMap() with indexed map offset past end of code'] = function (assert) {
+  // CVE-2026-93749: a section offset.line far past the end of the code must
+  // not make fromStringWithSourceMap add empty lines one at a time.
+  var map = {
+    version: 3,
+    sections: [{
+      offset: { line: 1e7, column: 0 },
+      map: {
+        version: 3,
+        sources: ['a.js'],
+        sourcesContent: ['a'],
+        names: [],
+        mappings: 'AAAA'
+      }
+    }]
+  };
+
+  var node = SourceNode.fromStringWithSourceMap('var x;\n', new SourceMapConsumer(map));
+  assert.equal(node.toString(), 'var x;\n');
+  assert.ok(node.children.length < 10, node.children.length + ' children');
+};
+
+exports['test .fromStringWithSourceMap() with deeply nested indexed map'] = function (assert) {
+  // CVE-2026-93749: nested indexed maps used to make the sources lookup in
+  // fromStringWithSourceMap exponential in the nesting depth.
+  var map = { version: 3, sources: ['a.js'], sourcesContent: ['a'], names: [], mappings: 'AAAA' };
+  for (var i = 0; i < 40; i++) {
+    map = { version: 3, sections: [{ offset: { line: 0, column: 0 }, map: map }] };
+  }
+
+  var node = SourceNode.fromStringWithSourceMap('var x;\n', new SourceMapConsumer(map));
+  assert.equal(node.toString(), 'var x;\n');
+  var contents = {};
+  node.walkSourceContents(function (source, content) { contents[source] = content; });
+  assert.deepEqual(contents, { 'a.js': 'a' });
+};
+
 exports['test .fromStringWithSourceMap() third argument'] = function (assert) {
   // Assume the following directory structure:
   //

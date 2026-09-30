@@ -895,6 +895,87 @@ exports['test indexed source map errors when sections are out of order by line']
   }, Error);
 };
 
+exports['test indexed source map errors on invalid section offsets'] = function(assert) {
+  var invalid = [-1, 1.5, NaN, Infinity, -Infinity, 1e999, 9007199254740992, '1', null, undefined, {}];
+
+  invalid.forEach(function (value) {
+    ['line', 'column'].forEach(function (field) {
+      var map = JSON.parse(JSON.stringify(util.indexedTestMap));
+      map.sections[0].offset[field] = value;
+
+      assert.throws(function() {
+        new SourceMapConsumer(map);
+      }, Error, 'offset.' + field + ' = ' + String(value));
+    });
+  });
+};
+
+exports['test indexed source map errors when section offset line is too large'] = function(assert) {
+  var map = JSON.parse(JSON.stringify(util.indexedTestMap));
+  map.sections[1].offset = { line: 1e7 + 1, column: 0 };
+
+  assert.throws(function() {
+    new SourceMapConsumer(map);
+  }, /must not exceed/);
+};
+
+exports['test indexed source map accepts large valid section offsets'] = function(assert) {
+  var map = JSON.parse(JSON.stringify(util.indexedTestMap));
+  map.sections[0].offset = { line: 0, column: 5000000 };
+  map.sections[1].offset = { line: 1e7, column: 0 };
+
+  var consumer = new SourceMapConsumer(map);
+  var pos = consumer.originalPositionFor({ line: 1e7 + 1, column: 1 });
+  assert.equal(pos.source, '/the/root/two.js');
+  pos = consumer.originalPositionFor({ line: 1, column: 5000001 });
+  assert.equal(pos.source, '/the/root/one.js');
+};
+
+function nestedIndexedMap(depth, offsetLine) {
+  var map = { version: 3, sources: ['a.js'], sourcesContent: ['a'], names: [], mappings: 'AAAA' };
+  for (var i = 0; i < depth; i++) {
+    map = { version: 3, sections: [{ offset: { line: offsetLine, column: 0 }, map: map }] };
+  }
+  return map;
+}
+
+exports['test nested indexed source map offsets add up'] = function(assert) {
+  var consumer = new SourceMapConsumer(nestedIndexedMap(5, 1000));
+  var lines = [];
+  consumer.eachMapping(function (m) { lines.push(m.generatedLine); });
+  assert.deepEqual(lines, [5001]);
+};
+
+exports['test nested indexed source map errors when total offset line is too large'] = function(assert) {
+  // Each level is within the bound, but together they exceed it.
+  new SourceMapConsumer(nestedIndexedMap(2, 5e6));
+  assert.throws(function() {
+    new SourceMapConsumer(nestedIndexedMap(3, 5e6));
+  }, /including offsets of nested sections/);
+};
+
+exports['test nested indexed source map sources is linear in depth'] = function(assert) {
+  // CVE-2026-93749: the sources getter used to re-read each nested
+  // consumer's sources per item, which is exponential in the nesting depth.
+  var depth = 12;
+  var consumer = new SourceMapConsumer(nestedIndexedMap(depth, 1));
+  var innermost = consumer;
+  for (var i = 0; i < depth; i++) {
+    innermost = innermost._sections[0].consumer;
+  }
+  var reads = 0;
+  var innermostSources = innermost.sources;
+  Object.defineProperty(innermost, 'sources', {
+    get: function () {
+      reads++;
+      return innermostSources;
+    }
+  });
+
+  assert.deepEqual(consumer.sources, ['a.js']);
+  assert.equal(reads, 1);
+};
+
 exports['test github issue #64'] = function (assert) {
   var map = new SourceMapConsumer({
     "version": 3,
