@@ -7,7 +7,7 @@ export interface RawSourceMap extends StartOfSourceMap {
     version: string;
     sources: string[];
     names: string[];
-    sourcesContent?: string[];
+    sourcesContent?: (string | null)[];
     mappings: string;
 }
 
