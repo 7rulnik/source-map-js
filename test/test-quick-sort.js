@@ -43,3 +43,11 @@ exports['test sorting unsorted array'] = function (assert) {
   assert.equal(JSON.stringify(ary.sort(numberCompare)),
                JSON.stringify(quickSorted));
 };
+
+exports['test sorting a suffix preserves the prefix'] = function (assert) {
+  var ary = [9, 8, 3, 1, 2, 1, 0];
+
+  quickSort(ary, numberCompare, 2);
+
+  assert.equal(JSON.stringify(ary), '[9,8,0,1,1,2,3]');
+};

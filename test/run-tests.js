@@ -51,6 +51,11 @@ var requires = fs.readdirSync(__dirname)
   .filter(isTestFile)
   .map(toRelativeModule);
 
+// Keep VM tests out of the test files bundled for xpcshell by webpack.
+if (isTestFile('test-quick-sort.js')) {
+  requires.push('./node/test-quick-sort');
+}
+
 var code = run(requires.map(require).map(function (mod, i) {
   return {
     name: requires[i],
