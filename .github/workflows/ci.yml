@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+env:
+  # Node and Prettier print colors only to a terminal; the Actions log
+  # isn't one but renders ANSI colors.
+  FORCE_COLOR: 1
+
 jobs:
   format:
     runs-on: ubuntu-latest
