@@ -5,7 +5,8 @@
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
-var SourceMapGenerator = require('../lib/source-map-generator').SourceMapGenerator;
+var SourceMapGenerator =
+  require('../lib/source-map-generator').SourceMapGenerator;
 var SourceMapConsumer = require('../lib/source-map-consumer').SourceMapConsumer;
 var SourceNode = require('../lib/source-node').SourceNode;
 var util = require('./util');
@@ -13,7 +14,7 @@ var util = require('./util');
 exports['test some simple stuff'] = function (assert) {
   var map = new SourceMapGenerator({
     file: 'foo.js',
-    sourceRoot: '.'
+    sourceRoot: '.',
   }).toJSON();
   assert.ok('file' in map);
   assert.ok('sourceRoot' in map);
@@ -26,7 +27,7 @@ exports['test some simple stuff'] = function (assert) {
 exports['test JSON serialization'] = function (assert) {
   var map = new SourceMapGenerator({
     file: 'foo.js',
-    sourceRoot: '.'
+    sourceRoot: '.',
   });
   assert.equal(map.toString(), JSON.stringify(map));
 };
@@ -34,12 +35,12 @@ exports['test JSON serialization'] = function (assert) {
 exports['test adding mappings (case 1)'] = function (assert) {
   var map = new SourceMapGenerator({
     file: 'generated-foo.js',
-    sourceRoot: '.'
+    sourceRoot: '.',
   });
 
   assert.doesNotThrow(function () {
     map.addMapping({
-      generated: { line: 1, column: 1 }
+      generated: { line: 1, column: 1 },
     });
   });
 };
@@ -47,22 +48,7 @@ exports['test adding mappings (case 1)'] = function (assert) {
 exports['test adding mappings (case 2)'] = function (assert) {
   var map = new SourceMapGenerator({
     file: 'generated-foo.js',
-    sourceRoot: '.'
-  });
-
-  assert.doesNotThrow(function () {
-    map.addMapping({
-      generated: { line: 1, column: 1 },
-      source: 'bar.js',
-      original: { line: 1, column: 1 }
-    });
-  });
-};
-
-exports['test adding mappings (case 3)'] = function (assert) {
-  var map = new SourceMapGenerator({
-    file: 'generated-foo.js',
-    sourceRoot: '.'
+    sourceRoot: '.',
   });
 
   assert.doesNotThrow(function () {
@@ -70,7 +56,22 @@ exports['test adding mappings (case 3)'] = function (assert) {
       generated: { line: 1, column: 1 },
       source: 'bar.js',
       original: { line: 1, column: 1 },
-      name: 'someToken'
+    });
+  });
+};
+
+exports['test adding mappings (case 3)'] = function (assert) {
+  var map = new SourceMapGenerator({
+    file: 'generated-foo.js',
+    sourceRoot: '.',
+  });
+
+  assert.doesNotThrow(function () {
+    map.addMapping({
+      generated: { line: 1, column: 1 },
+      source: 'bar.js',
+      original: { line: 1, column: 1 },
+      name: 'someToken',
     });
   });
 };
@@ -78,7 +79,7 @@ exports['test adding mappings (case 3)'] = function (assert) {
 exports['test adding mappings (invalid)'] = function (assert) {
   var map = new SourceMapGenerator({
     file: 'generated-foo.js',
-    sourceRoot: '.'
+    sourceRoot: '.',
   });
 
   // Not enough info.
@@ -91,7 +92,7 @@ exports['test adding mappings with skipValidation'] = function (assert) {
   var map = new SourceMapGenerator({
     file: 'generated-foo.js',
     sourceRoot: '.',
-    skipValidation: true
+    skipValidation: true,
   });
 
   // Not enough info, caught by `util.getArgs`
@@ -103,87 +104,89 @@ exports['test adding mappings with skipValidation'] = function (assert) {
   assert.doesNotThrow(function () {
     map.addMapping({
       generated: { line: 1, column: 1 },
-      original: { line: 1, column: 1 }
+      original: { line: 1, column: 1 },
     });
   });
 };
 
-exports['test that the correct mappings are being generated'] = function (assert) {
+exports['test that the correct mappings are being generated'] = function (
+  assert
+) {
   var map = new SourceMapGenerator({
     file: 'min.js',
-    sourceRoot: '/the/root'
+    sourceRoot: '/the/root',
   });
 
   map.addMapping({
     generated: { line: 1, column: 1 },
     original: { line: 1, column: 1 },
-    source: 'one.js'
+    source: 'one.js',
   });
   map.addMapping({
     generated: { line: 1, column: 5 },
     original: { line: 1, column: 5 },
-    source: 'one.js'
+    source: 'one.js',
   });
   map.addMapping({
     generated: { line: 1, column: 9 },
     original: { line: 1, column: 11 },
-    source: 'one.js'
+    source: 'one.js',
   });
   map.addMapping({
     generated: { line: 1, column: 18 },
     original: { line: 1, column: 21 },
     source: 'one.js',
-    name: 'bar'
+    name: 'bar',
   });
   map.addMapping({
     generated: { line: 1, column: 21 },
     original: { line: 2, column: 3 },
-    source: 'one.js'
+    source: 'one.js',
   });
   map.addMapping({
     generated: { line: 1, column: 28 },
     original: { line: 2, column: 10 },
     source: 'one.js',
-    name: 'baz'
+    name: 'baz',
   });
   map.addMapping({
     generated: { line: 1, column: 32 },
     original: { line: 2, column: 14 },
     source: 'one.js',
-    name: 'bar'
+    name: 'bar',
   });
 
   map.addMapping({
     generated: { line: 2, column: 1 },
     original: { line: 1, column: 1 },
-    source: 'two.js'
+    source: 'two.js',
   });
   map.addMapping({
     generated: { line: 2, column: 5 },
     original: { line: 1, column: 5 },
-    source: 'two.js'
+    source: 'two.js',
   });
   map.addMapping({
     generated: { line: 2, column: 9 },
     original: { line: 1, column: 11 },
-    source: 'two.js'
+    source: 'two.js',
   });
   map.addMapping({
     generated: { line: 2, column: 18 },
     original: { line: 1, column: 21 },
     source: 'two.js',
-    name: 'n'
+    name: 'n',
   });
   map.addMapping({
     generated: { line: 2, column: 21 },
     original: { line: 2, column: 3 },
-    source: 'two.js'
+    source: 'two.js',
   });
   map.addMapping({
     generated: { line: 2, column: 28 },
     original: { line: 2, column: 10 },
     source: 'two.js',
-    name: 'n'
+    name: 'n',
   });
 
   map = JSON.parse(map.toString());
@@ -191,17 +194,19 @@ exports['test that the correct mappings are being generated'] = function (assert
   util.assertEqualMaps(assert, map, util.testMap);
 };
 
-exports['test that adding a mapping with an empty string name does not break generation'] = function (assert) {
+exports[
+  'test that adding a mapping with an empty string name does not break generation'
+] = function (assert) {
   var map = new SourceMapGenerator({
     file: 'generated-foo.js',
-    sourceRoot: '.'
+    sourceRoot: '.',
   });
 
   map.addMapping({
     generated: { line: 1, column: 1 },
     source: 'bar.js',
     original: { line: 1, column: 1 },
-    name: ''
+    name: '',
   });
 
   assert.doesNotThrow(function () {
@@ -212,17 +217,17 @@ exports['test that adding a mapping with an empty string name does not break gen
 exports['test that source content can be set'] = function (assert) {
   var map = new SourceMapGenerator({
     file: 'min.js',
-    sourceRoot: '/the/root'
+    sourceRoot: '/the/root',
   });
   map.addMapping({
     generated: { line: 1, column: 1 },
     original: { line: 1, column: 1 },
-    source: 'one.js'
+    source: 'one.js',
   });
   map.addMapping({
     generated: { line: 2, column: 1 },
     original: { line: 1, column: 1 },
-    source: 'two.js'
+    source: 'two.js',
   });
   map.setSourceContent('one.js', 'one file content');
 
@@ -234,38 +239,56 @@ exports['test that source content can be set'] = function (assert) {
 };
 
 exports['test .fromSourceMap'] = function (assert) {
-  var map = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(util.testMap));
+  var map = SourceMapGenerator.fromSourceMap(
+    new SourceMapConsumer(util.testMap)
+  );
   util.assertEqualMaps(assert, map.toJSON(), util.testMap);
 };
 
 exports['test .fromSourceMap with sourcesContent'] = function (assert) {
   var map = SourceMapGenerator.fromSourceMap(
-    new SourceMapConsumer(util.testMapWithSourcesContent));
+    new SourceMapConsumer(util.testMapWithSourcesContent)
+  );
   util.assertEqualMaps(assert, map.toJSON(), util.testMapWithSourcesContent);
 };
 
 exports['test .fromSourceMap with single source'] = function (assert) {
   var map = SourceMapGenerator.fromSourceMap(
-      new SourceMapConsumer(util.testMapSingleSource));
+    new SourceMapConsumer(util.testMapSingleSource)
+  );
   util.assertEqualMaps(assert, map.toJSON(), util.testMapSingleSource);
 };
 
 exports['test .fromSourceMap with empty mappings'] = function (assert) {
   var map = SourceMapGenerator.fromSourceMap(
-    new SourceMapConsumer(util.testMapEmptyMappings));
+    new SourceMapConsumer(util.testMapEmptyMappings)
+  );
   util.assertEqualMaps(assert, map.toJSON(), util.testMapEmptyMappings);
 };
 
-exports['test .fromSourceMap with empty mappings and relative sources'] = function (assert) {
-  var map = SourceMapGenerator.fromSourceMap(
-    new SourceMapConsumer(util.testMapEmptyMappingsRelativeSources));
-  util.assertEqualMaps(assert, map.toJSON(), util.testMapEmptyMappingsRelativeSources_generatedExpected);
-};
-
-exports['test .fromSourceMap with multiple sources where mappings refers only to single source'] = function (assert) {
+exports['test .fromSourceMap with empty mappings and relative sources'] =
+  function (assert) {
     var map = SourceMapGenerator.fromSourceMap(
-        new SourceMapConsumer(util.testMapMultiSourcesMappingRefersSingleSourceOnly));
-    util.assertEqualMaps(assert, map.toJSON(), util.testMapMultiSourcesMappingRefersSingleSourceOnly);
+      new SourceMapConsumer(util.testMapEmptyMappingsRelativeSources)
+    );
+    util.assertEqualMaps(
+      assert,
+      map.toJSON(),
+      util.testMapEmptyMappingsRelativeSources_generatedExpected
+    );
+  };
+
+exports[
+  'test .fromSourceMap with multiple sources where mappings refers only to single source'
+] = function (assert) {
+  var map = SourceMapGenerator.fromSourceMap(
+    new SourceMapConsumer(util.testMapMultiSourcesMappingRefersSingleSourceOnly)
+  );
+  util.assertEqualMaps(
+    assert,
+    map.toJSON(),
+    util.testMapMultiSourcesMappingRefersSingleSourceOnly
+  );
 };
 
 exports['test applySourceMap'] = function (assert) {
@@ -276,10 +299,10 @@ exports['test applySourceMap'] = function (assert) {
     'genA2\n',
     new SourceNode(1, 0, 'fileX', 'lineX1\n'),
     'genA3\n',
-    new SourceNode(1, 0, 'fileY', 'lineY1\n')
+    new SourceNode(1, 0, 'fileY', 'lineY1\n'),
   ]);
   var mapStep1 = node.toStringWithSourceMap({
-    file: 'fileA'
+    file: 'fileA',
   }).map;
   mapStep1.setSourceContent('fileX', 'lineX1\nlineX2\n');
   mapStep1 = mapStep1.toJSON();
@@ -292,10 +315,10 @@ exports['test applySourceMap'] = function (assert) {
     new SourceNode(4, 0, 'fileA', 'lineA4\n'),
     new SourceNode(1, 0, 'fileB', 'lineB1\n'),
     new SourceNode(2, 0, 'fileB', 'lineB2\n'),
-    'gen2\n'
+    'gen2\n',
   ]);
   var mapStep2 = node.toStringWithSourceMap({
-    file: 'fileGen'
+    file: 'fileGen',
   }).map;
   mapStep2.setSourceContent('fileB', 'lineB1\nlineB2\n');
   mapStep2 = mapStep2.toJSON();
@@ -308,17 +331,19 @@ exports['test applySourceMap'] = function (assert) {
     new SourceNode(4, 0, 'fileA', 'lineA4\n'),
     new SourceNode(1, 0, 'fileB', 'lineB1\n'),
     new SourceNode(2, 0, 'fileB', 'lineB2\n'),
-    'gen2\n'
+    'gen2\n',
   ]);
   var expectedMap = node.toStringWithSourceMap({
-    file: 'fileGen'
+    file: 'fileGen',
   }).map;
   expectedMap.setSourceContent('fileX', 'lineX1\nlineX2\n');
   expectedMap.setSourceContent('fileB', 'lineB1\nlineB2\n');
   expectedMap = expectedMap.toJSON();
 
   // apply source map "mapStep1" to "mapStep2"
-  var generator = SourceMapGenerator.fromSourceMap(new SourceMapConsumer(mapStep2));
+  var generator = SourceMapGenerator.fromSourceMap(
+    new SourceMapConsumer(mapStep2)
+  );
   generator.applySourceMap(new SourceMapConsumer(mapStep1));
   var actualMap = generator.toJSON();
 
@@ -327,15 +352,17 @@ exports['test applySourceMap'] = function (assert) {
 
 exports['test applySourceMap throws when file is missing'] = function (assert) {
   var map = new SourceMapGenerator({
-    file: 'test.js'
+    file: 'test.js',
   });
   var map2 = new SourceMapGenerator();
-  assert.throws(function() {
+  assert.throws(function () {
     map.applySourceMap(new SourceMapConsumer(map2.toJSON()));
   });
 };
 
-exports['test the two additional parameters of applySourceMap'] = function (assert) {
+exports['test the two additional parameters of applySourceMap'] = function (
+  assert
+) {
   // Assume the following directory structure:
   //
   // http://foo.org/
@@ -355,77 +382,74 @@ exports['test the two additional parameters of applySourceMap'] = function (asse
   //   baz.coffee
 
   var bundleMap = new SourceMapGenerator({
-    file: 'bundle.js'
+    file: 'bundle.js',
   });
   bundleMap.addMapping({
     generated: { line: 3, column: 3 },
     original: { line: 2, column: 2 },
-    source: '../../coffee/foo.coffee'
+    source: '../../coffee/foo.coffee',
   });
   bundleMap.setSourceContent('../../coffee/foo.coffee', 'foo coffee');
   bundleMap.addMapping({
     generated: { line: 13, column: 13 },
     original: { line: 12, column: 12 },
-    source: '/bar.coffee'
+    source: '/bar.coffee',
   });
   bundleMap.setSourceContent('/bar.coffee', 'bar coffee');
   bundleMap.addMapping({
     generated: { line: 23, column: 23 },
     original: { line: 22, column: 22 },
-    source: 'http://www.example.com/baz.coffee'
+    source: 'http://www.example.com/baz.coffee',
   });
-  bundleMap.setSourceContent(
-    'http://www.example.com/baz.coffee',
-    'baz coffee'
-  );
+  bundleMap.setSourceContent('http://www.example.com/baz.coffee', 'baz coffee');
   bundleMap = new SourceMapConsumer(bundleMap.toJSON());
 
   var minifiedMap = new SourceMapGenerator({
     file: 'bundle.min.js',
-    sourceRoot: '..'
+    sourceRoot: '..',
   });
   minifiedMap.addMapping({
     generated: { line: 1, column: 1 },
     original: { line: 3, column: 3 },
-    source: 'temp/bundle.js'
+    source: 'temp/bundle.js',
   });
   minifiedMap.addMapping({
     generated: { line: 11, column: 11 },
     original: { line: 13, column: 13 },
-    source: 'temp/bundle.js'
+    source: 'temp/bundle.js',
   });
   minifiedMap.addMapping({
     generated: { line: 21, column: 21 },
     original: { line: 23, column: 23 },
-    source: 'temp/bundle.js'
+    source: 'temp/bundle.js',
   });
   minifiedMap = new SourceMapConsumer(minifiedMap.toJSON());
 
   var expectedMap = function (sources) {
     var map = new SourceMapGenerator({
       file: 'bundle.min.js',
-      sourceRoot: '..'
+      sourceRoot: '..',
     });
     map.addMapping({
       generated: { line: 1, column: 1 },
       original: { line: 2, column: 2 },
-      source: sources[0]
+      source: sources[0],
     });
     map.setSourceContent(sources[0], 'foo coffee');
     map.addMapping({
       generated: { line: 11, column: 11 },
       original: { line: 12, column: 12 },
-      source: sources[1]
+      source: sources[1],
     });
     map.setSourceContent(sources[1], 'bar coffee');
     map.addMapping({
       generated: { line: 21, column: 21 },
       original: { line: 22, column: 22 },
-      source: sources[2]
+      source: sources[2],
     });
     map.setSourceContent(sources[2], 'baz coffee');
     return map.toJSON();
-  }
+  };
 
   var actualMap = function (aSourceMapPath) {
     var map = SourceMapGenerator.fromSourceMap(minifiedMap);
@@ -433,82 +457,110 @@ exports['test the two additional parameters of applySourceMap'] = function (asse
     // instead of supplying the second parameter wouldn't work here.
     map.applySourceMap(bundleMap, '../temp/bundle.js', aSourceMapPath);
     return map.toJSON();
-  }
+  };
 
-  util.assertEqualMaps(assert, actualMap('../temp/temp_maps'), expectedMap([
-    'coffee/foo.coffee',
-    '/bar.coffee',
-    'http://www.example.com/baz.coffee'
-  ]));
+  util.assertEqualMaps(
+    assert,
+    actualMap('../temp/temp_maps'),
+    expectedMap([
+      'coffee/foo.coffee',
+      '/bar.coffee',
+      'http://www.example.com/baz.coffee',
+    ])
+  );
 
-  util.assertEqualMaps(assert, actualMap('/app/temp/temp_maps'), expectedMap([
-    '/app/coffee/foo.coffee',
-    '/bar.coffee',
-    'http://www.example.com/baz.coffee'
-  ]));
+  util.assertEqualMaps(
+    assert,
+    actualMap('/app/temp/temp_maps'),
+    expectedMap([
+      '/app/coffee/foo.coffee',
+      '/bar.coffee',
+      'http://www.example.com/baz.coffee',
+    ])
+  );
 
-  util.assertEqualMaps(assert, actualMap('http://foo.org/app/temp/temp_maps'), expectedMap([
-    'http://foo.org/app/coffee/foo.coffee',
-    'http://foo.org/bar.coffee',
-    'http://www.example.com/baz.coffee'
-  ]));
+  util.assertEqualMaps(
+    assert,
+    actualMap('http://foo.org/app/temp/temp_maps'),
+    expectedMap([
+      'http://foo.org/app/coffee/foo.coffee',
+      'http://foo.org/bar.coffee',
+      'http://www.example.com/baz.coffee',
+    ])
+  );
 
   // If the third parameter is omitted or set to the current working
   // directory we get incorrect source paths:
 
-  util.assertEqualMaps(assert, actualMap(), expectedMap([
-    '../coffee/foo.coffee',
-    '/bar.coffee',
-    'http://www.example.com/baz.coffee'
-  ]));
+  util.assertEqualMaps(
+    assert,
+    actualMap(),
+    expectedMap([
+      '../coffee/foo.coffee',
+      '/bar.coffee',
+      'http://www.example.com/baz.coffee',
+    ])
+  );
 
-  util.assertEqualMaps(assert, actualMap(''), expectedMap([
-    '../coffee/foo.coffee',
-    '/bar.coffee',
-    'http://www.example.com/baz.coffee'
-  ]));
+  util.assertEqualMaps(
+    assert,
+    actualMap(''),
+    expectedMap([
+      '../coffee/foo.coffee',
+      '/bar.coffee',
+      'http://www.example.com/baz.coffee',
+    ])
+  );
 
-  util.assertEqualMaps(assert, actualMap('.'), expectedMap([
-    '../coffee/foo.coffee',
-    '/bar.coffee',
-    'http://www.example.com/baz.coffee'
-  ]));
+  util.assertEqualMaps(
+    assert,
+    actualMap('.'),
+    expectedMap([
+      '../coffee/foo.coffee',
+      '/bar.coffee',
+      'http://www.example.com/baz.coffee',
+    ])
+  );
 
-  util.assertEqualMaps(assert, actualMap('./'), expectedMap([
-    '../coffee/foo.coffee',
-    '/bar.coffee',
-    'http://www.example.com/baz.coffee'
-  ]));
+  util.assertEqualMaps(
+    assert,
+    actualMap('./'),
+    expectedMap([
+      '../coffee/foo.coffee',
+      '/bar.coffee',
+      'http://www.example.com/baz.coffee',
+    ])
+  );
 };
 
 exports['test applySourceMap name handling'] = function (assert) {
   // Imagine some CoffeeScript code being compiled into JavaScript and then
   // minified.
 
-  var assertName = function(coffeeName, jsName, expectedName) {
+  var assertName = function (coffeeName, jsName, expectedName) {
     var minifiedMap = new SourceMapGenerator({
-      file: 'test.js.min'
+      file: 'test.js.min',
     });
     minifiedMap.addMapping({
       generated: { line: 1, column: 4 },
       original: { line: 1, column: 4 },
       source: 'test.js',
-      name: jsName
+      name: jsName,
     });
 
     var coffeeMap = new SourceMapGenerator({
-      file: 'test.js'
+      file: 'test.js',
     });
     coffeeMap.addMapping({
       generated: { line: 1, column: 4 },
       original: { line: 1, column: 0 },
       source: 'test.coffee',
-      name: coffeeName
+      name: coffeeName,
     });
 
     minifiedMap.applySourceMap(new SourceMapConsumer(coffeeMap.toJSON()));
 
-    new SourceMapConsumer(minifiedMap.toJSON()).eachMapping(function(mapping) {
+    new SourceMapConsumer(minifiedMap.toJSON()).eachMapping(function (mapping) {
       assert.equal(mapping.name, expectedName);
     });
   };
@@ -539,23 +591,23 @@ exports['test applySourceMap name handling'] = function (assert) {
 
 exports['test sorting with duplicate generated mappings'] = function (assert) {
   var map = new SourceMapGenerator({
-    file: 'test.js'
+    file: 'test.js',
   });
   map.addMapping({
     generated: { line: 3, column: 0 },
     original: { line: 2, column: 0 },
-    source: 'a.js'
+    source: 'a.js',
   });
   map.addMapping({
-    generated: { line: 2, column: 0 }
+    generated: { line: 2, column: 0 },
   });
   map.addMapping({
-    generated: { line: 2, column: 0 }
+    generated: { line: 2, column: 0 },
   });
   map.addMapping({
     generated: { line: 1, column: 0 },
     original: { line: 1, column: 0 },
-    source: 'a.js'
+    source: 'a.js',
   });
 
   util.assertEqualMaps(assert, map.toJSON(), {
@@ -563,7 +615,7 @@ exports['test sorting with duplicate generated mappings'] = function (assert) {
     file: 'test.js',
     sources: ['a.js'],
     names: [],
-    mappings: 'AAAA;A;AACA'
+    mappings: 'AAAA;A;AACA',
   });
 };
 
@@ -573,10 +625,10 @@ exports['test ignore duplicate mappings.'] = function (assert) {
 
   // null original source location
   var nullMapping1 = {
-    generated: { line: 1, column: 0 }
+    generated: { line: 1, column: 0 },
   };
   var nullMapping2 = {
-    generated: { line: 2, column: 2 }
+    generated: { line: 2, column: 2 },
   };
 
   map1 = new SourceMapGenerator(init);
@@ -600,12 +652,12 @@ exports['test ignore duplicate mappings.'] = function (assert) {
   var srcMapping1 = {
     generated: { line: 1, column: 0 },
     original: { line: 11, column: 0 },
-    source: 'srcMapping1.js'
+    source: 'srcMapping1.js',
   };
   var srcMapping2 = {
     generated: { line: 2, column: 2 },
     original: { line: 11, column: 0 },
-    source: 'srcMapping2.js'
+    source: 'srcMapping2.js',
   };
 
   map1 = new SourceMapGenerator(init);
@@ -630,13 +682,13 @@ exports['test ignore duplicate mappings.'] = function (assert) {
     generated: { line: 1, column: 0 },
     original: { line: 11, column: 0 },
     source: 'fullMapping1.js',
-    name: 'fullMapping1'
+    name: 'fullMapping1',
   };
   var fullMapping2 = {
     generated: { line: 2, column: 2 },
     original: { line: 11, column: 0 },
     source: 'fullMapping2.js',
-    name: 'fullMapping2'
+    name: 'fullMapping2',
   };
 
   map1 = new SourceMapGenerator(init);
@@ -657,74 +709,77 @@ exports['test ignore duplicate mappings.'] = function (assert) {
   util.assertEqualMaps(assert, map1.toJSON(), map2.toJSON());
 };
 
-exports['test github issue #72, check for duplicate names or sources'] = function (assert) {
-  var map = new SourceMapGenerator({
-    file: 'test.js'
-  });
-  map.addMapping({
-    generated: { line: 1, column: 1 },
-    original: { line: 2, column: 2 },
-    source: 'a.js',
-    name: 'foo'
-  });
-  map.addMapping({
-    generated: { line: 3, column: 3 },
-    original: { line: 4, column: 4 },
-    source: 'a.js',
-    name: 'foo'
-  });
-  util.assertEqualMaps(assert, map.toJSON(), {
-    version: 3,
-    file: 'test.js',
-    sources: ['a.js'],
-    names: ['foo'],
-    mappings: 'CACEA;;GAEEA'
-  });
-};
+exports['test github issue #72, check for duplicate names or sources'] =
+  function (assert) {
+    var map = new SourceMapGenerator({
+      file: 'test.js',
+    });
+    map.addMapping({
+      generated: { line: 1, column: 1 },
+      original: { line: 2, column: 2 },
+      source: 'a.js',
+      name: 'foo',
+    });
+    map.addMapping({
+      generated: { line: 3, column: 3 },
+      original: { line: 4, column: 4 },
+      source: 'a.js',
+      name: 'foo',
+    });
+    util.assertEqualMaps(assert, map.toJSON(), {
+      version: 3,
+      file: 'test.js',
+      sources: ['a.js'],
+      names: ['foo'],
+      mappings: 'CACEA;;GAEEA',
+    });
+  };
 
-exports['test setting sourcesContent to null when already null'] = function (assert) {
-  var smg = new SourceMapGenerator({ file: "foo.js" });
-  assert.doesNotThrow(function() {
-    smg.setSourceContent("bar.js", null);
+exports['test setting sourcesContent to null when already null'] = function (
+  assert
+) {
+  var smg = new SourceMapGenerator({ file: 'foo.js' });
+  assert.doesNotThrow(function () {
+    smg.setSourceContent('bar.js', null);
   });
 };
 
 exports['test applySourceMap with unexact match'] = function (assert) {
   var map1 = new SourceMapGenerator({
-    file: 'bundled-source'
+    file: 'bundled-source',
   });
   map1.addMapping({
     generated: { line: 1, column: 4 },
     original: { line: 1, column: 4 },
-    source: 'transformed-source'
+    source: 'transformed-source',
   });
   map1.addMapping({
     generated: { line: 2, column: 4 },
     original: { line: 2, column: 4 },
-    source: 'transformed-source'
+    source: 'transformed-source',
   });
 
   var map2 = new SourceMapGenerator({
-    file: 'transformed-source'
+    file: 'transformed-source',
   });
   map2.addMapping({
     generated: { line: 2, column: 0 },
     original: { line: 1, column: 0 },
-    source: 'original-source'
+    source: 'original-source',
   });
 
   var expectedMap = new SourceMapGenerator({
-    file: 'bundled-source'
+    file: 'bundled-source',
   });
   expectedMap.addMapping({
     generated: { line: 1, column: 4 },
     original: { line: 1, column: 4 },
-    source: 'transformed-source'
+    source: 'transformed-source',
   });
   expectedMap.addMapping({
     generated: { line: 2, column: 4 },
     original: { line: 1, column: 0 },
-    source: 'original-source'
+    source: 'original-source',
   });
 
   map1.applySourceMap(new SourceMapConsumer(map2.toJSON()));
@@ -748,11 +803,16 @@ exports['test issue #192'] = function (assert) {
   var consumer = new SourceMapConsumer(generator.toJSON());
 
   var n = 0;
-  consumer.eachMapping(function () { n++ });
+  consumer.eachMapping(function () {
+    n++;
+  });
 
-  assert.equal(n, 2,
-               "Should not de-duplicate mappings that have the same " +
-               "generated positions, but different original positions.");
+  assert.equal(
+    n,
+    2,
+    'Should not de-duplicate mappings that have the same ' +
+      'generated positions, but different original positions.'
+  );
 };
 
 exports['test numeric names #231'] = function (assert) {
@@ -761,15 +821,17 @@ exports['test numeric names #231'] = function (assert) {
     source: 'a.js',
     generated: { line: 1, column: 10 },
     original: { line: 1, column: 10 },
-    name: 8
+    name: 8,
   });
   var map = generator.toJSON();
-  assert.ok(map, "Adding a mapping with a numeric name did not throw");
-  assert.equal(map.names.length, 1, "Should have one name");
-  assert.equal(map.names[0], "8", "Should have the right name");
+  assert.ok(map, 'Adding a mapping with a numeric name did not throw');
+  assert.equal(map.names.length, 1, 'Should have one name');
+  assert.equal(map.names[0], '8', 'Should have the right name');
 };
 
-exports['test that we can create a generator from a source map with empty mappings'] = function (assert) {
+exports[
+  'test that we can create a generator from a source map with empty mappings'
+] = function (assert) {
   var generator = new SourceMapGenerator();
   generator.addMapping({
     generated: { line: 1, column: 1 },
@@ -780,9 +842,12 @@ exports['test that we can create a generator from a source map with empty mappin
   const consumer = new SourceMapConsumer(originalMap);
   const fromConsumer = SourceMapGenerator.fromSourceMap(consumer);
   const fromSourceMap = fromConsumer.toJSON();
-  assert.ok(fromSourceMap, "Creating a generator from a map with only generated position did not throw");
+  assert.ok(
+    fromSourceMap,
+    'Creating a generator from a map with only generated position did not throw'
+  );
   assert.equal(fromSourceMap.mappings, originalMap.mappings);
-}
+};
 exports['test serializing large generated line gaps'] = function (assert) {
   var map = new SourceMapGenerator({ file: 'min.js' });
   map.addMapping({ generated: { line: 1, column: 0 } });
@@ -796,22 +861,26 @@ exports['test serializing large generated line gaps'] = function (assert) {
   assert.equal(mappings.indexOf('A', 4), mappings.length - 1);
 };
 
-exports['test copying an indexed map with a large section offset into a generator'] = function (assert) {
+exports[
+  'test copying an indexed map with a large section offset into a generator'
+] = function (assert) {
   // CVE-2026-93749: copying mappings from an indexed map with a large
   // section offset.line must not build the ';' run one rope node at a time.
   var consumer = new SourceMapConsumer({
     version: 3,
-    sections: [{
-      offset: { line: 1e7, column: 0 },
-      map: { version: 3, sources: ['a.js'], names: [], mappings: 'AAAA' }
-    }]
+    sections: [
+      {
+        offset: { line: 1e7, column: 0 },
+        map: { version: 3, sources: ['a.js'], names: [], mappings: 'AAAA' },
+      },
+    ],
   });
   var map = new SourceMapGenerator({ file: 'min.js' });
   consumer.eachMapping(function (m) {
     map.addMapping({
       generated: { line: m.generatedLine, column: m.generatedColumn },
       original: { line: m.originalLine, column: m.originalColumn },
-      source: m.source
+      source: m.source,
     });
   });
 
