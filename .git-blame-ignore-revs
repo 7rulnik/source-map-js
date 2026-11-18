@@ -1,5 +1,13 @@
-# Commits that only reformat code. GitHub skips these in blame views; locally,
-# run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once.
+# Commits that only reformat code.
+#
+# GitHub reads this file automatically. For local `git blame`, run once per
+# clone:
+#
+#   git config blame.ignoreRevsFile ':(optional).git-blame-ignore-revs'
+#
+# `:(optional)` keeps blame working on branches that predate this file. Git
+# versions without `:(optional)` support need the plain path, and then blame
+# fails with "could not open object name list" wherever the file is missing.
 
 # Set up Prettier and format the codebase (https://github.com/7rulnik/source-map-js/pull/88)
 817c1e13dedcbcaa2d9b56a6782dda0862461252
