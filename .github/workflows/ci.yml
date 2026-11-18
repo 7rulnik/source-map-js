@@ -17,7 +17,8 @@ jobs:
           persist-credentials: false
       - uses: pnpm/setup@v3
         with:
-          runtime: node@lts
+          # No version: pnpm/setup reads it from .nvmrc.
+          runtime: node
           cache: true
           require-lockfile: true
       - run: pnpm format:check
@@ -30,7 +31,8 @@ jobs:
           persist-credentials: false
       - uses: pnpm/setup@v3
         with:
-          runtime: node@lts
+          # No version: pnpm/setup reads it from .nvmrc.
+          runtime: node
           cache: true
           require-lockfile: true
       - run: pnpm test:coverage
