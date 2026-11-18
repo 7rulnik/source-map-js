@@ -5,13 +5,15 @@
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
+var test = require('node:test');
+var assert = require('node:assert');
 var binarySearch = require('../lib/binary-search');
 
 function numberCompare(a, b) {
   return a - b;
 }
 
-exports['test too high with default (glb) bias'] = function (assert) {
+test('too high with default (glb) bias', () => {
   var needle = 30;
   var haystack = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
 
@@ -23,9 +25,9 @@ exports['test too high with default (glb) bias'] = function (assert) {
     haystack[binarySearch.search(needle, haystack, numberCompare)],
     20
   );
-};
+});
 
-exports['test too low with default (glb) bias'] = function (assert) {
+test('too low with default (glb) bias', () => {
   var needle = 1;
   var haystack = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
 
@@ -34,9 +36,9 @@ exports['test too low with default (glb) bias'] = function (assert) {
   });
 
   assert.equal(binarySearch.search(needle, haystack, numberCompare), -1);
-};
+});
 
-exports['test too high with lub bias'] = function (assert) {
+test('too high with lub bias', () => {
   var needle = 30;
   var haystack = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
 
@@ -53,9 +55,9 @@ exports['test too high with lub bias'] = function (assert) {
     ),
     -1
   );
-};
+});
 
-exports['test too low with lub bias'] = function (assert) {
+test('too low with lub bias', () => {
   var needle = 1;
   var haystack = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
 
@@ -74,9 +76,9 @@ exports['test too low with lub bias'] = function (assert) {
     ],
     2
   );
-};
+});
 
-exports['test exact search'] = function (assert) {
+test('exact search', () => {
   var needle = 4;
   var haystack = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
 
@@ -84,9 +86,9 @@ exports['test exact search'] = function (assert) {
     haystack[binarySearch.search(needle, haystack, numberCompare)],
     4
   );
-};
+});
 
-exports['test fuzzy search with default (glb) bias'] = function (assert) {
+test('fuzzy search with default (glb) bias', () => {
   var needle = 19;
   var haystack = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
 
@@ -94,9 +96,9 @@ exports['test fuzzy search with default (glb) bias'] = function (assert) {
     haystack[binarySearch.search(needle, haystack, numberCompare)],
     18
   );
-};
+});
 
-exports['test fuzzy search with lub bias'] = function (assert) {
+test('fuzzy search with lub bias', () => {
   var needle = 19;
   var haystack = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
 
@@ -111,9 +113,9 @@ exports['test fuzzy search with lub bias'] = function (assert) {
     ],
     20
   );
-};
+});
 
-exports['test multiple matches'] = function (assert) {
+test('multiple matches', () => {
   var needle = 5;
   var haystack = [1, 1, 2, 5, 5, 5, 13, 21];
 
@@ -126,9 +128,9 @@ exports['test multiple matches'] = function (assert) {
     ),
     3
   );
-};
+});
 
-exports['test multiple matches at the beginning'] = function (assert) {
+test('multiple matches at the beginning', () => {
   var needle = 1;
   var haystack = [1, 1, 2, 5, 5, 5, 13, 21];
 
@@ -141,4 +143,4 @@ exports['test multiple matches at the beginning'] = function (assert) {
     ),
     0
   );
-};
+});

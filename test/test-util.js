@@ -5,9 +5,11 @@
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
+var test = require('node:test');
+var assert = require('node:assert');
 var libUtil = require('../lib/util');
 
-exports['test urls'] = function (assert) {
+test('urls', () => {
   var assertUrl = function (url) {
     assert.equal(url, libUtil.urlGenerate(libUtil.urlParse(url)));
   };
@@ -44,9 +46,9 @@ exports['test urls'] = function (assert) {
   assert.equal(parsed.host, '');
   assert.equal(parsed.path, '/webpack/bootstrap 67e184f9679733298d44');
   assert.equal(webpackURL, libUtil.urlGenerate(parsed));
-};
+});
 
-exports['test normalize()'] = function (assert) {
+test('normalize()', () => {
   assert.equal(libUtil.normalize('/..'), '/');
   assert.equal(libUtil.normalize('/../'), '/');
   assert.equal(libUtil.normalize('/../../../..'), '/');
@@ -90,9 +92,9 @@ exports['test normalize()'] = function (assert) {
     libUtil.normalize('http://www.example.com/./..//a/b/c/.././d//'),
     'http://www.example.com/a/b/d/'
   );
-};
+});
 
-exports['test join()'] = function (assert) {
+test('join()', () => {
   assert.equal(libUtil.join('a', 'b'), 'a/b');
   assert.equal(libUtil.join('a/', 'b'), 'a/b');
   assert.equal(libUtil.join('a//', 'b'), 'a/b');
@@ -247,10 +249,10 @@ exports['test join()'] = function (assert) {
     libUtil.join('//www.example.com', '//foo.org/bar'),
     '//foo.org/bar'
   );
-};
+});
 
 // TODO Issue #128: Define and test this function properly.
-exports['test relative()'] = function (assert) {
+test('relative()', () => {
   assert.equal(libUtil.relative('/the/root', '/the/root/one.js'), 'one.js');
   assert.equal(
     libUtil.relative('http://the/root', 'http://the/root/one.js'),
@@ -280,9 +282,9 @@ exports['test relative()'] = function (assert) {
 
   assert.equal(libUtil.relative('/', '/the/root/one.js'), 'the/root/one.js');
   assert.equal(libUtil.relative('/', 'the/root/one.js'), 'the/root/one.js');
-};
+});
 
-exports['test computeSourceURL'] = function (assert) {
+test('computeSourceURL', () => {
   // Tests with sourceMapURL.
   assert.equal(
     libUtil.computeSourceURL('', 'src/test.js', 'http://example.com'),
@@ -342,4 +344,4 @@ exports['test computeSourceURL'] = function (assert) {
     libUtil.computeSourceURL('http://example.com/dir', '/test.js'),
     'http://example.com/dir/test.js'
   );
-};
+});

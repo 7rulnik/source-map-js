@@ -5,12 +5,14 @@
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
+var test = require('node:test');
+var assert = require('node:assert');
 var util = require('./util');
 var SourceMapConsumer = require('../lib/source-map-consumer').SourceMapConsumer;
 var SourceMapGenerator =
   require('../lib/source-map-generator').SourceMapGenerator;
 
-exports['test eating our own dog food'] = function (assert) {
+test('eating our own dog food', () => {
   var smg = new SourceMapGenerator({
     file: 'testing.js',
     sourceRoot: '/wu/tang',
@@ -468,4 +470,4 @@ exports['test eating our own dog food'] = function (assert) {
     null,
     true
   );
-};
+});
