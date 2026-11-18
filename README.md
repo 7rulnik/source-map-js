@@ -18,7 +18,7 @@ More important that WASM version has some optimizations in JS code too. This is 
 
 I decided to fork the original source-map and port these optimizations from the article and several others PR from the original source-map.
 
----------
+---
 
 This is a library to generate and consume the source map format
 [described here][format].
@@ -33,12 +33,13 @@ This is a library to generate and consume the source map format
 
     <script src="https://raw.githubusercontent.com/mozilla/source-map/master/dist/source-map.min.js" defer></script> -->
 
---------------------------------------------------------------------------------
+---
 
 <!-- `npm run toc` to regenerate the Table of Contents -->
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
 ## Table of Contents
 
 - [Examples](#examples)
@@ -58,7 +59,7 @@ This is a library to generate and consume the source map format
     - [SourceMapConsumer.prototype.eachMapping(callback, context, order)](#sourcemapconsumerprototypeeachmappingcallback-context-order)
   - [SourceMapGenerator](#sourcemapgenerator)
     - [new SourceMapGenerator([startOfSourceMap])](#new-sourcemapgeneratorstartofsourcemap)
-    - [SourceMapGenerator.fromSourceMap(sourceMapConsumer)](#sourcemapgeneratorfromsourcemapsourcemapconsumer)
+    - [SourceMapGenerator.fromSourceMap(sourceMapConsumer, sourceMapGeneratorOptions)](#sourcemapgeneratorfromsourcemapsourcemapconsumer-sourcemapgeneratoroptions)
     - [SourceMapGenerator.prototype.addMapping(mapping)](#sourcemapgeneratorprototypeaddmappingmapping)
     - [SourceMapGenerator.prototype.setSourceContent(sourceFile, sourceContent)](#sourcemapgeneratorprototypesetsourcecontentsourcefile-sourcecontent)
     - [SourceMapGenerator.prototype.applySourceMap(sourceMapConsumer[, sourceFile[, sourceMapPath]])](#sourcemapgeneratorprototypeapplysourcemapsourcemapconsumer-sourcefile-sourcemappath)
@@ -89,7 +90,8 @@ var rawSourceMap = {
   names: ['bar', 'baz', 'n'],
   sources: ['one.js', 'two.js'],
   sourceRoot: 'http://example.com/www/js/',
-  mappings: 'CAAC,IAAI,IAAM,SAAUA,GAClB,OAAOC,IAAID;CCDb,IAAI,IAAM,SAAUE,GAClB,OAAOA'
+  mappings:
+    'CAAC,IAAI,IAAM,SAAUA,GAClB,OAAOC,IAAID;CCDb,IAAI,IAAM,SAAUE,GAClB,OAAOA',
 };
 
 var smc = new SourceMapConsumer(rawSourceMap);
@@ -98,20 +100,24 @@ console.log(smc.sources);
 // [ 'http://example.com/www/js/one.js',
 //   'http://example.com/www/js/two.js' ]
 
-console.log(smc.originalPositionFor({
-  line: 2,
-  column: 28
-}));
+console.log(
+  smc.originalPositionFor({
+    line: 2,
+    column: 28,
+  })
+);
 // { source: 'http://example.com/www/js/two.js',
 //   line: 2,
 //   column: 10,
 //   name: 'n' }
 
-console.log(smc.generatedPositionFor({
-  source: 'http://example.com/www/js/two.js',
-  line: 2,
-  column: 10
-}));
+console.log(
+  smc.generatedPositionFor({
+    source: 'http://example.com/www/js/two.js',
+    line: 2,
+    column: 10,
+  })
+);
 // { line: 2, column: 28 }
 
 smc.eachMapping(function (m) {
@@ -129,30 +135,32 @@ In depth guide:
 ```js
 function compile(ast) {
   switch (ast.type) {
-  case 'BinaryExpression':
-    return new SourceNode(
-      ast.location.line,
-      ast.location.column,
-      ast.location.source,
-      [compile(ast.left), " + ", compile(ast.right)]
-    );
-  case 'Literal':
-    return new SourceNode(
-      ast.location.line,
-      ast.location.column,
-      ast.location.source,
-      String(ast.value)
-    );
-  // ...
-  default:
-    throw new Error("Bad AST");
+    case 'BinaryExpression':
+      return new SourceNode(
+        ast.location.line,
+        ast.location.column,
+        ast.location.source,
+        [compile(ast.left), ' + ', compile(ast.right)]
+      );
+    case 'Literal':
+      return new SourceNode(
+        ast.location.line,
+        ast.location.column,
+        ast.location.source,
+        String(ast.value)
+      );
+    // ...
+    default:
+      throw new Error('Bad AST');
   }
 }
 
-var ast = parse("40 + 2", "add.js");
-console.log(compile(ast).toStringWithSourceMap({
-  file: 'add.js'
-}));
+var ast = parse('40 + 2', 'add.js');
+console.log(
+  compile(ast).toStringWithSourceMap({
+    file: 'add.js',
+  })
+);
 // { code: '40 + 2',
 //   map: [object SourceMapGenerator] }
 ```
@@ -161,20 +169,20 @@ console.log(compile(ast).toStringWithSourceMap({
 
 ```js
 var map = new SourceMapGenerator({
-  file: "source-mapped.js"
+  file: 'source-mapped.js',
 });
 
 map.addMapping({
   generated: {
     line: 10,
-    column: 35
+    column: 35,
   },
-  source: "foo.js",
+  source: 'foo.js',
   original: {
     line: 33,
-    column: 2
+    column: 2,
   },
-  name: "christopher"
+  name: 'christopher',
 });
 
 console.log(map.toString());
@@ -193,7 +201,7 @@ var sourceMap = require('source-map');
 var sourceMap = window.sourceMap;
 
 // Inside Firefox
-const sourceMap = require("devtools/toolkit/sourcemap/source-map.js");
+const sourceMap = require('devtools/toolkit/sourcemap/source-map.js');
 ```
 
 ### SourceMapConsumer
@@ -208,20 +216,20 @@ The only parameter is the raw source map (either as a string which can be
 `JSON.parse`'d, or an object). According to the spec, source maps have the
 following attributes:
 
-* `version`: Which version of the source map spec this map is following.
+- `version`: Which version of the source map spec this map is following.
 
-* `sources`: An array of URLs to the original source files.
+- `sources`: An array of URLs to the original source files.
 
-* `names`: An array of identifiers which can be referenced by individual
+- `names`: An array of identifiers which can be referenced by individual
   mappings.
 
-* `sourceRoot`: Optional. The URL root from which all sources are relative.
+- `sourceRoot`: Optional. The URL root from which all sources are relative.
 
-* `sourcesContent`: Optional. An array of contents of the original source files.
+- `sourcesContent`: Optional. An array of contents of the original source files.
 
-* `mappings`: A string of base64 VLQs which contain the actual mappings.
+- `mappings`: A string of base64 VLQs which contain the actual mappings.
 
-* `file`: Optional. The generated filename this source map is associated with.
+- `file`: Optional. The generated filename this source map is associated with.
 
 ```js
 var consumer = new sourceMap.SourceMapConsumer(rawSourceMapJsonData);
@@ -234,7 +242,7 @@ inclusive.
 
 ```js
 // Before:
-consumer.allGeneratedPositionsFor({ line: 2, source: "foo.coffee" })
+consumer.allGeneratedPositionsFor({ line: 2, source: 'foo.coffee' });
 // [ { line: 2,
 //     column: 1 },
 //   { line: 2,
@@ -245,7 +253,7 @@ consumer.allGeneratedPositionsFor({ line: 2, source: "foo.coffee" })
 consumer.computeColumnSpans();
 
 // After:
-consumer.allGeneratedPositionsFor({ line: 2, source: "foo.coffee" })
+consumer.allGeneratedPositionsFor({ line: 2, source: 'foo.coffee' });
 // [ { line: 2,
 //     column: 1,
 //     lastColumn: 9 },
@@ -255,7 +263,6 @@ consumer.allGeneratedPositionsFor({ line: 2, source: "foo.coffee" })
 //   { line: 2,
 //     column: 20,
 //     lastColumn: Infinity } ]
-
 ```
 
 #### SourceMapConsumer.prototype.originalPositionFor(generatedPosition)
@@ -264,41 +271,44 @@ Returns the original source, line, and column information for the generated
 source's line and column positions provided. The only argument is an object with
 the following properties:
 
-* `line`: The line number in the generated source.  Line numbers in
+- `line`: The line number in the generated source. Line numbers in
   this library are 1-based (note that the underlying source map
   specification uses 0-based line numbers -- this library handles the
   translation).
 
-* `column`: The column number in the generated source.  Column numbers
+- `column`: The column number in the generated source. Column numbers
   in this library are 0-based.
 
-* `bias`: Either `SourceMapConsumer.GREATEST_LOWER_BOUND` or
+- `bias`: Either `SourceMapConsumer.GREATEST_LOWER_BOUND` or
   `SourceMapConsumer.LEAST_UPPER_BOUND`. Specifies whether to return the closest
   element that is smaller than or greater than the one we are searching for,
-  respectively, if the exact element cannot be found.  Defaults to
+  respectively, if the exact element cannot be found. Defaults to
   `SourceMapConsumer.GREATEST_LOWER_BOUND`.
 
 and an object is returned with the following properties:
 
-* `source`: The original source file, or null if this information is not
+- `source`: The original source file, or null if this information is not
   available.
 
-* `line`: The line number in the original source, or null if this information is
-  not available.  The line number is 1-based.
+- `line`: The line number in the original source, or null if this information is
+  not available. The line number is 1-based.
 
-* `column`: The column number in the original source, or null if this
-  information is not available.  The column number is 0-based.
+- `column`: The column number in the original source, or null if this
+  information is not available. The column number is 0-based.
 
-* `name`: The original identifier, or null if this information is not available.
+- `name`: The original identifier, or null if this information is not available.
 
 ```js
-consumer.originalPositionFor({ line: 2, column: 10 })
+consumer.originalPositionFor({ line: 2, column: 10 });
 // { source: 'foo.coffee',
 //   line: 2,
 //   column: 2,
 //   name: null }
 
-consumer.originalPositionFor({ line: 99999999999999999, column: 999999999999999 })
+consumer.originalPositionFor({
+  line: 99999999999999999,
+  column: 999999999999999,
+});
 // { source: null,
 //   line: null,
 //   column: null,
@@ -311,24 +321,24 @@ Returns the generated line and column information for the original source,
 line, and column positions provided. The only argument is an object with
 the following properties:
 
-* `source`: The filename of the original source.
+- `source`: The filename of the original source.
 
-* `line`: The line number in the original source.  The line number is
+- `line`: The line number in the original source. The line number is
   1-based.
 
-* `column`: The column number in the original source.  The column
+- `column`: The column number in the original source. The column
   number is 0-based.
 
 and an object is returned with the following properties:
 
-* `line`: The line number in the generated source, or null.  The line
+- `line`: The line number in the generated source, or null. The line
   number is 1-based.
 
-* `column`: The column number in the generated source, or null.  The
+- `column`: The column number in the generated source, or null. The
   column number is 0-based.
 
 ```js
-consumer.generatedPositionFor({ source: "example.js", line: 2, column: 10 })
+consumer.generatedPositionFor({ source: 'example.js', line: 2, column: 10 });
 // { line: 1,
 //   column: 56 }
 ```
@@ -344,24 +354,24 @@ that has any offsets.
 
 The only argument is an object with the following properties:
 
-* `source`: The filename of the original source.
+- `source`: The filename of the original source.
 
-* `line`: The line number in the original source.  The line number is
+- `line`: The line number in the original source. The line number is
   1-based.
 
-* `column`: Optional. The column number in the original source.  The
+- `column`: Optional. The column number in the original source. The
   column number is 0-based.
 
 and an array of objects is returned, each with the following properties:
 
-* `line`: The line number in the generated source, or null.  The line
+- `line`: The line number in the generated source, or null. The line
   number is 1-based.
 
-* `column`: The column number in the generated source, or null.  The
+- `column`: The column number in the generated source, or null. The
   column number is 0-based.
 
 ```js
-consumer.allGeneratedpositionsfor({ line: 2, source: "foo.coffee" })
+consumer.allGeneratedpositionsfor({ line: 2, source: 'foo.coffee' });
 // [ { line: 2,
 //     column: 1 },
 //   { line: 2,
@@ -399,16 +409,16 @@ thrown. Optionally, pass `true` as the second param to have `null` returned
 instead.
 
 ```js
-consumer.sources
+consumer.sources;
 // [ "my-cool-lib.clj" ]
 
-consumer.sourceContentFor("my-cool-lib.clj")
+consumer.sourceContentFor('my-cool-lib.clj');
 // "..."
 
-consumer.sourceContentFor("this is not in the source map");
+consumer.sourceContentFor('this is not in the source map');
 // Error: "this is not in the source map" is not in the source map
 
-consumer.sourceContentFor("this is not in the source map", true);
+consumer.sourceContentFor('this is not in the source map', true);
 // null
 ```
 
@@ -417,21 +427,23 @@ consumer.sourceContentFor("this is not in the source map", true);
 Iterate over each mapping between an original source/line/column and a
 generated line/column in this source map.
 
-* `callback`: The function that is called with each mapping. Mappings have the
+- `callback`: The function that is called with each mapping. Mappings have the
   form `{ source, generatedLine, generatedColumn, originalLine, originalColumn,
-  name }`
+name }`
 
-* `context`: Optional. If specified, this object will be the value of `this`
+- `context`: Optional. If specified, this object will be the value of `this`
   every time that `callback` is called.
 
-* `order`: Either `SourceMapConsumer.GENERATED_ORDER` or
+- `order`: Either `SourceMapConsumer.GENERATED_ORDER` or
   `SourceMapConsumer.ORIGINAL_ORDER`. Specifies whether you want to iterate over
   the mappings sorted by the generated file's line/column order or the
   original's source/line/column order, respectively. Defaults to
   `SourceMapConsumer.GENERATED_ORDER`.
 
 ```js
-consumer.eachMapping(function (m) { console.log(m); })
+consumer.eachMapping(function (m) {
+  console.log(m);
+});
 // ...
 // { source: 'illmatic.js',
 //   generatedLine: 1,
@@ -447,6 +459,7 @@ consumer.eachMapping(function (m) { console.log(m); })
 //   name: null }
 // ...
 ```
+
 ### SourceMapGenerator
 
 An instance of the SourceMapGenerator represents a source map which is being
@@ -456,23 +469,23 @@ built incrementally.
 
 You may pass an object with the following properties:
 
-* `file`: The filename of the generated source that this source map is
+- `file`: The filename of the generated source that this source map is
   associated with.
 
-* `sourceRoot`: A root for all relative URLs in this source map.
+- `sourceRoot`: A root for all relative URLs in this source map.
 
-* `skipValidation`: Optional. When `true`, disables validation of mappings as
+- `skipValidation`: Optional. When `true`, disables validation of mappings as
   they are added. This can improve performance but should be used with
   discretion, as a last resort. Even then, one should avoid using this flag when
   running tests, if possible.
 
-* `ignoreInvalidMapping`: Optional. When `true`, instead of throwing error on
+- `ignoreInvalidMapping`: Optional. When `true`, instead of throwing error on
   invalid mapping, it will be ignored.
 
 ```js
 var generator = new sourceMap.SourceMapGenerator({
-  file: "my-generated-javascript-file.js",
-  sourceRoot: "http://example.com/app/js/"
+  file: 'my-generated-javascript-file.js',
+  sourceRoot: 'http://example.com/app/js/',
 });
 ```
 
@@ -480,9 +493,9 @@ var generator = new sourceMap.SourceMapGenerator({
 
 Creates a new `SourceMapGenerator` from an existing `SourceMapConsumer` instance.
 
-* `sourceMapConsumer` The SourceMap.
+- `sourceMapConsumer` The SourceMap.
 
-* `sourceMapGeneratorOptions` options that will be passed to the SourceMapGenerator constructor which used under the hood.
+- `sourceMapGeneratorOptions` options that will be passed to the SourceMapGenerator constructor which used under the hood.
 
 ```js
 var generator = sourceMap.SourceMapGenerator.fromSourceMap(consumer, {
@@ -496,33 +509,35 @@ Add a single mapping from original source line and column to the generated
 source's line and column for this source map being created. The mapping object
 should have the following properties:
 
-* `generated`: An object with the generated line and column positions.
+- `generated`: An object with the generated line and column positions.
 
-* `original`: An object with the original line and column positions.
+- `original`: An object with the original line and column positions.
 
-* `source`: The original source file (relative to the sourceRoot).
+- `source`: The original source file (relative to the sourceRoot).
 
-* `name`: An optional original token name for this mapping.
+- `name`: An optional original token name for this mapping.
 
 ```js
 generator.addMapping({
-  source: "module-one.scm",
+  source: 'module-one.scm',
   original: { line: 128, column: 0 },
-  generated: { line: 3, column: 456 }
-})
+  generated: { line: 3, column: 456 },
+});
 ```
 
 #### SourceMapGenerator.prototype.setSourceContent(sourceFile, sourceContent)
 
 Set the source content for an original source file.
 
-* `sourceFile` the URL of the original source file.
+- `sourceFile` the URL of the original source file.
 
-* `sourceContent` the content of the source file.
+- `sourceContent` the content of the source file.
 
 ```js
-generator.setSourceContent("module-one.scm",
-                           fs.readFileSync("path/to/module-one.scm"))
+generator.setSourceContent(
+  'module-one.scm',
+  fs.readFileSync('path/to/module-one.scm')
+);
 ```
 
 #### SourceMapGenerator.prototype.applySourceMap(sourceMapConsumer[, sourceFile[, sourceMapPath]])
@@ -532,13 +547,13 @@ Each mapping to the supplied source file is rewritten using the
 supplied SourceMap. Note: The resolution for the resulting mappings
 is the minimum of this map and the supplied map.
 
-* `sourceMapConsumer`: The SourceMap to be applied.
+- `sourceMapConsumer`: The SourceMap to be applied.
 
-* `sourceFile`: Optional. The filename of the source file.
+- `sourceFile`: Optional. The filename of the source file.
   If omitted, sourceMapConsumer.file will be used, if it exists.
   Otherwise an error will be thrown.
 
-* `sourceMapPath`: Optional. The dirname of the path to the SourceMap
+- `sourceMapPath`: Optional. The dirname of the path to the SourceMap
   to be applied. If relative, it is relative to the SourceMap.
 
   This parameter is needed when the two SourceMaps aren't in the same
@@ -554,7 +569,7 @@ is the minimum of this map and the supplied map.
 Renders the source map being generated to a string.
 
 ```js
-generator.toString()
+generator.toString();
 // '{"version":3,"sources":["module-one.scm"],"names":[],"mappings":"...snip...","file":"my-generated-javascript-file.js","sourceRoot":"http://example.com/app/js/"}'
 ```
 
@@ -568,25 +583,25 @@ use before outputting the generated JS and source map.
 
 #### new SourceNode([line, column, source[, chunk[, name]]])
 
-* `line`: The original line number associated with this source node, or null if
-  it isn't associated with an original line.  The line number is 1-based.
+- `line`: The original line number associated with this source node, or null if
+  it isn't associated with an original line. The line number is 1-based.
 
-* `column`: The original column number associated with this source node, or null
-  if it isn't associated with an original column.  The column number
+- `column`: The original column number associated with this source node, or null
+  if it isn't associated with an original column. The column number
   is 0-based.
 
-* `source`: The original source's filename; null if no filename is provided.
+- `source`: The original source's filename; null if no filename is provided.
 
-* `chunk`: Optional. Is immediately passed to `SourceNode.prototype.add`, see
+- `chunk`: Optional. Is immediately passed to `SourceNode.prototype.add`, see
   below.
 
-* `name`: Optional. The original identifier.
+- `name`: Optional. The original identifier.
 
 ```js
-var node = new SourceNode(1, 2, "a.cpp", [
-  new SourceNode(3, 4, "b.cpp", "extern int status;\n"),
-  new SourceNode(5, 6, "c.cpp", "std::string* make_string(size_t n);\n"),
-  new SourceNode(7, 8, "d.cpp", "int main(int argc, char** argv) {}\n"),
+var node = new SourceNode(1, 2, 'a.cpp', [
+  new SourceNode(3, 4, 'b.cpp', 'extern int status;\n'),
+  new SourceNode(5, 6, 'c.cpp', 'std::string* make_string(size_t n);\n'),
+  new SourceNode(7, 8, 'd.cpp', 'int main(int argc, char** argv) {}\n'),
 ]);
 ```
 
@@ -594,41 +609,45 @@ var node = new SourceNode(1, 2, "a.cpp", [
 
 Creates a SourceNode from generated code and a SourceMapConsumer.
 
-* `code`: The generated code
+- `code`: The generated code
 
-* `sourceMapConsumer` The SourceMap for the generated code
+- `sourceMapConsumer` The SourceMap for the generated code
 
-* `relativePath` The optional path that relative sources in `sourceMapConsumer`
+- `relativePath` The optional path that relative sources in `sourceMapConsumer`
   should be relative to.
 
 ```js
-var consumer = new SourceMapConsumer(fs.readFileSync("path/to/my-file.js.map", "utf8"));
-var node = SourceNode.fromStringWithSourceMap(fs.readFileSync("path/to/my-file.js"),
-                                              consumer);
+var consumer = new SourceMapConsumer(
+  fs.readFileSync('path/to/my-file.js.map', 'utf8')
+);
+var node = SourceNode.fromStringWithSourceMap(
+  fs.readFileSync('path/to/my-file.js'),
+  consumer
+);
 ```
 
 #### SourceNode.prototype.add(chunk)
 
 Add a chunk of generated JS to this source node.
 
-* `chunk`: A string snippet of generated JS code, another instance of
-   `SourceNode`, or an array where each member is one of those things.
+- `chunk`: A string snippet of generated JS code, another instance of
+  `SourceNode`, or an array where each member is one of those things.
 
 ```js
-node.add(" + ");
+node.add(' + ');
 node.add(otherNode);
-node.add([leftHandOperandNode, " + ", rightHandOperandNode]);
+node.add([leftHandOperandNode, ' + ', rightHandOperandNode]);
 ```
 
 #### SourceNode.prototype.prepend(chunk)
 
 Prepend a chunk of generated JS to this source node.
 
-* `chunk`: A string snippet of generated JS code, another instance of
-   `SourceNode`, or an array where each member is one of those things.
+- `chunk`: A string snippet of generated JS code, another instance of
+  `SourceNode`, or an array where each member is one of those things.
 
 ```js
-node.prepend("/** Build Id: f783haef86324gf **/\n\n");
+node.prepend('/** Build Id: f783haef86324gf **/\n\n');
 ```
 
 #### SourceNode.prototype.setSourceContent(sourceFile, sourceContent)
@@ -636,13 +655,15 @@ node.prepend("/** Build Id: f783haef86324gf **/\n\n");
 Set the source content for a source file. This will be added to the
 `SourceMap` in the `sourcesContent` field.
 
-* `sourceFile`: The filename of the source file
+- `sourceFile`: The filename of the source file
 
-* `sourceContent`: The content of the source file
+- `sourceContent`: The content of the source file
 
 ```js
-node.setSourceContent("module-one.scm",
-                      fs.readFileSync("path/to/module-one.scm"))
+node.setSourceContent(
+  'module-one.scm',
+  fs.readFileSync('path/to/module-one.scm')
+);
 ```
 
 #### SourceNode.prototype.walk(fn)
@@ -651,19 +672,18 @@ Walk over the tree of JS snippets in this node and its children. The walking
 function is called once for each snippet of JS and is passed that snippet and
 the its original associated source's line/column location.
 
-* `fn`: The traversal function.
+- `fn`: The traversal function.
 
 ```js
-var node = new SourceNode(1, 2, "a.js", [
-  new SourceNode(3, 4, "b.js", "uno"),
-  "dos",
-  [
-    "tres",
-    new SourceNode(5, 6, "c.js", "quatro")
-  ]
+var node = new SourceNode(1, 2, 'a.js', [
+  new SourceNode(3, 4, 'b.js', 'uno'),
+  'dos',
+  ['tres', new SourceNode(5, 6, 'c.js', 'quatro')],
 ]);
 
-node.walk(function (code, loc) { console.log("WALK:", code, loc); })
+node.walk(function (code, loc) {
+  console.log('WALK:', code, loc);
+});
 // WALK: uno { source: 'b.js', line: 3, column: 4, name: null }
 // WALK: dos { source: 'a.js', line: 1, column: 2, name: null }
 // WALK: tres { source: 'a.js', line: 1, column: 2, name: null }
@@ -675,18 +695,20 @@ node.walk(function (code, loc) { console.log("WALK:", code, loc); })
 Walk over the tree of SourceNodes. The walking function is called for each
 source file content and is passed the filename and source content.
 
-* `fn`: The traversal function.
+- `fn`: The traversal function.
 
 ```js
-var a = new SourceNode(1, 2, "a.js", "generated from a");
-a.setSourceContent("a.js", "original a");
-var b = new SourceNode(1, 2, "b.js", "generated from b");
-b.setSourceContent("b.js", "original b");
-var c = new SourceNode(1, 2, "c.js", "generated from c");
-c.setSourceContent("c.js", "original c");
+var a = new SourceNode(1, 2, 'a.js', 'generated from a');
+a.setSourceContent('a.js', 'original a');
+var b = new SourceNode(1, 2, 'b.js', 'generated from b');
+b.setSourceContent('b.js', 'original b');
+var c = new SourceNode(1, 2, 'c.js', 'generated from c');
+c.setSourceContent('c.js', 'original c');
 
 var node = new SourceNode(null, null, null, [a, b, c]);
-node.walkSourceContents(function (source, contents) { console.log("WALK:", source, ":", contents); })
+node.walkSourceContents(function (source, contents) {
+  console.log('WALK:', source, ':', contents);
+});
 // WALK: a.js : original a
 // WALK: b.js : original b
 // WALK: c.js : original c
@@ -697,15 +719,15 @@ node.walkSourceContents(function (source, contents) { console.log("WALK:", sourc
 Like `Array.prototype.join` except for SourceNodes. Inserts the separator
 between each of this source node's children.
 
-* `sep`: The separator.
+- `sep`: The separator.
 
 ```js
-var lhs = new SourceNode(1, 2, "a.rs", "my_copy");
-var operand = new SourceNode(3, 4, "a.rs", "=");
-var rhs = new SourceNode(5, 6, "a.rs", "orig.clone()");
+var lhs = new SourceNode(1, 2, 'a.rs', 'my_copy');
+var operand = new SourceNode(3, 4, 'a.rs', '=');
+var rhs = new SourceNode(5, 6, 'a.rs', 'orig.clone()');
 
-var node = new SourceNode(null, null, null, [ lhs, operand, rhs ]);
-var joinedNode = node.join(" ");
+var node = new SourceNode(null, null, null, [lhs, operand, rhs]);
+var joinedNode = node.join(' ');
 ```
 
 #### SourceNode.prototype.replaceRight(pattern, replacement)
@@ -713,13 +735,13 @@ var joinedNode = node.join(" ");
 Call `String.prototype.replace` on the very right-most source snippet. Useful
 for trimming white space from the end of a source node, etc.
 
-* `pattern`: The pattern to replace.
+- `pattern`: The pattern to replace.
 
-* `replacement`: The thing to replace the pattern with.
+- `replacement`: The thing to replace the pattern with.
 
 ```js
 // Trim trailing white space.
-node.replaceRight(/\s*$/, "");
+node.replaceRight(/\s*$/, '');
 ```
 
 #### SourceNode.prototype.toString()
@@ -728,16 +750,13 @@ Return the string representation of this source node. Walks over the tree and
 concatenates all the various snippets together to one string.
 
 ```js
-var node = new SourceNode(1, 2, "a.js", [
-  new SourceNode(3, 4, "b.js", "uno"),
-  "dos",
-  [
-    "tres",
-    new SourceNode(5, 6, "c.js", "quatro")
-  ]
+var node = new SourceNode(1, 2, 'a.js', [
+  new SourceNode(3, 4, 'b.js', 'uno'),
+  'dos',
+  ['tres', new SourceNode(5, 6, 'c.js', 'quatro')],
 ]);
 
-node.toString()
+node.toString();
 // 'unodostresquatro'
 ```
 
@@ -750,16 +769,13 @@ original sources.
 The arguments are the same as those to `new SourceMapGenerator`.
 
 ```js
-var node = new SourceNode(1, 2, "a.js", [
-  new SourceNode(3, 4, "b.js", "uno"),
-  "dos",
-  [
-    "tres",
-    new SourceNode(5, 6, "c.js", "quatro")
-  ]
+var node = new SourceNode(1, 2, 'a.js', [
+  new SourceNode(3, 4, 'b.js', 'uno'),
+  'dos',
+  ['tres', new SourceNode(5, 6, 'c.js', 'quatro')],
 ]);
 
-node.toStringWithSourceMap({ file: "my-output-file.js" })
+node.toStringWithSourceMap({ file: 'my-output-file.js' });
 // { code: 'unodostresquatro',
 //   map: [object SourceMapGenerator] }
 ```

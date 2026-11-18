@@ -20,8 +20,7 @@ function run(tests) {
         try {
           tests[i].testCase[k](assert);
           passed++;
-        }
-        catch (e) {
+        } catch (e) {
           console.log('FAILED ' + tests[i].name + ': ' + k + '!');
           console.log(e.stack);
         }
@@ -38,24 +37,25 @@ function run(tests) {
 
 function isTestFile(f) {
   var testToRun = process.argv[2];
-  return testToRun
-    ? path.basename(testToRun) === f
-    : /^test\-.*?\.js/.test(f);
+  return testToRun ? path.basename(testToRun) === f : /^test\-.*?\.js/.test(f);
 }
 
 function toRelativeModule(f) {
   return './' + f.replace(/\.js$/, '');
 }
 
-var requires = fs.readdirSync(__dirname)
+var requires = fs
+  .readdirSync(__dirname)
   .filter(isTestFile)
   .map(toRelativeModule);
 
-var code = run(requires.map(require).map(function (mod, i) {
-  return {
-    name: requires[i],
-    testCase: mod
-  };
-}));
+var code = run(
+  requires.map(require).map(function (mod, i) {
+    return {
+      name: requires[i],
+      testCase: mod,
+    };
+  })
+);
 
 process.exit(code);

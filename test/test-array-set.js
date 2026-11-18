@@ -56,7 +56,9 @@ exports['test creating from an array'] = function (assert) {
   assert.strictEqual(set.at(3), 'quux');
 };
 
-exports['test that you can add __proto__; see github issue #30'] = function (assert) {
+exports['test that you can add __proto__; see github issue #30'] = function (
+  assert
+) {
   var set = new ArraySet();
   set.add('__proto__');
   assert.ok(set.has('__proto__'));
