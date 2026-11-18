@@ -181,6 +181,9 @@ importers:
       doctoc:
         specifier: ^0.15.0
         version: 0.15.0
+      prettier:
+        specifier: 3.10.1
+        version: 3.10.1
 
 packages:
 
@@ -315,6 +318,11 @@ packages:
   picomatch@2.3.0:
     resolution: {integrity: sha512-lY1Q/PiJGC2zOv/z391WOTD+Z02bCgsFfvxoXXf6h7kv9o+WmsmzYqrAwY63sNgOxE4xEdq0WyUnXfKeBrSvYw==}
     engines: {node: '>=8.6'}
+
+  prettier@3.10.1:
+    resolution: {integrity: sha512-70vp3ZUYoPlFbF9uiTdXHUUCGEIp7d4+6p+8DYbkm2jP7x/3i/paXVF6dopSI3zd/CEitrZN1rc4i85xWmmXlg==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
@@ -498,6 +506,8 @@ snapshots:
   path-key@3.1.1: {}
 
   picomatch@2.3.0: {}
+
+  prettier@3.10.1: {}
 
   queue-microtask@1.2.3: {}
 
