@@ -65,5 +65,6 @@
   "clean-publish": {
     "cleanDocs": true
   },
-  "typings": "source-map.d.ts"
+  "typings": "source-map.d.ts",
+  "packageManager": "pnpm@12.21.0"
 }
