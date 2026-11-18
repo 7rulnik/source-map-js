@@ -144,3 +144,11 @@ test('multiple matches at the beginning', () => {
     0
   );
 });
+
+test('empty haystack returns -1', () => {
+  assert.equal(binarySearch.search(1, [], numberCompare), -1);
+  assert.equal(
+    binarySearch.search(1, [], numberCompare, binarySearch.LEAST_UPPER_BOUND),
+    -1
+  );
+});

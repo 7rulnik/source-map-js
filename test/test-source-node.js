@@ -729,3 +729,15 @@ test('from issue 258', () => {
     )
   );
 });
+
+test('no-arg constructor', () => {
+  var node = new SourceNode();
+  assert.equal(node.line, null);
+  assert.equal(node.column, null);
+  assert.equal(node.source, null);
+  assert.equal(node.name, null);
+  assert.equal(node.toString(), '');
+
+  node.add('hello');
+  assert.equal(node.toString(), 'hello');
+});
