@@ -55,7 +55,7 @@
   },
   "license": "BSD-3-Clause",
   "scripts": {
-    "test": "node test/run-tests.js",
+    "test": "node --test 'test/test-*.js'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "toc": "doctoc --title '## Table of Contents' README.md && prettier --write README.md"

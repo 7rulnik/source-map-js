@@ -5,6 +5,8 @@
  * http://opensource.org/licenses/BSD-3-Clause
  */
 
+var test = require('node:test');
+var assert = require('node:assert');
 var util = require('./util');
 var SourceMapGenerator =
   require('../lib/source-map-generator').SourceMapGenerator;
@@ -12,12 +14,14 @@ var SourceMapConsumer = require('../lib/source-map-consumer').SourceMapConsumer;
 var SourceNode = require('../lib/source-node').SourceNode;
 
 function forEachNewline(fn) {
-  return function (assert) {
-    ['\n', '\r\n'].forEach(fn.bind(null, assert));
+  return function () {
+    ['\n', '\r\n'].forEach(function (nl) {
+      fn(nl);
+    });
   };
 }
 
-exports['test .add()'] = function (assert) {
+test('.add()', () => {
   var node = new SourceNode(null, null, null);
 
   // Adding a string works.
@@ -40,9 +44,9 @@ exports['test .add()'] = function (assert) {
   assert.throws(function () {
     node.add(function () {});
   });
-};
+});
 
-exports['test .prepend()'] = function (assert) {
+test('.prepend()', () => {
   var node = new SourceNode(null, null, null);
 
   // Prepending a string works.
@@ -76,9 +80,9 @@ exports['test .prepend()'] = function (assert) {
   assert.throws(function () {
     node.prepend(function () {});
   });
-};
+});
 
-exports['test .toString()'] = function (assert) {
+test('.toString()', () => {
   assert.equal(
     new SourceNode(null, null, null, [
       'function foo() {',
@@ -87,18 +91,18 @@ exports['test .toString()'] = function (assert) {
     ]).toString(),
     'function foo() {return 10;}'
   );
-};
+});
 
-exports['test .join()'] = function (assert) {
+test('.join()', () => {
   assert.equal(
     new SourceNode(null, null, null, ['a', 'b', 'c', 'd'])
       .join(', ')
       .toString(),
     'a, b, c, d'
   );
-};
+});
 
-exports['test .walk()'] = function (assert) {
+test('.walk()', () => {
   var node = new SourceNode(null, null, null, [
     '(function () {\n',
     '  ',
@@ -127,9 +131,9 @@ exports['test .walk()'] = function (assert) {
     assert.equal(expected[i].column, loc.column);
     i++;
   });
-};
+});
 
-exports['test .replaceRight'] = function (assert) {
+test('.replaceRight', () => {
   var node;
 
   // Not nested
@@ -144,10 +148,11 @@ exports['test .replaceRight'] = function (assert) {
   ]);
   node.replaceRight(/kill all humans/, 'watch Futurama');
   assert.equal(node.toString(), 'hey sexy mama, want to watch Futurama?');
-};
+});
 
-exports['test .toStringWithSourceMap()'] = forEachNewline(
-  function (assert, nl) {
+test(
+  '.toStringWithSourceMap()',
+  forEachNewline((nl) => {
     var node = new SourceNode(null, null, null, [
       '(function () {' + nl,
       '  ',
@@ -227,11 +232,12 @@ exports['test .toStringWithSourceMap()'] = forEachNewline(
     assert.equal(actual.source, null);
     assert.equal(actual.line, null);
     assert.equal(actual.column, null);
-  }
+  })
 );
 
-exports['test .fromStringWithSourceMap()'] = forEachNewline(
-  function (assert, nl) {
+test(
+  '.fromStringWithSourceMap()',
+  forEachNewline((nl) => {
     var testCode = util.testGeneratedCode.replace(/\n/g, nl);
     var node = SourceNode.fromStringWithSourceMap(
       testCode,
@@ -253,11 +259,12 @@ exports['test .fromStringWithSourceMap()'] = forEachNewline(
     assert.equal(map.version, util.testMap.version);
     assert.equal(map.file, util.testMap.file);
     assert.equal(map.mappings, util.testMap.mappings);
-  }
+  })
 );
 
-exports['test .fromStringWithSourceMap() empty map'] = forEachNewline(
-  function (assert, nl) {
+test(
+  '.fromStringWithSourceMap() empty map',
+  forEachNewline((nl) => {
     var node = SourceNode.fromStringWithSourceMap(
       util.testGeneratedCode.replace(/\n/g, nl),
       new SourceMapConsumer(util.emptyMap)
@@ -278,11 +285,12 @@ exports['test .fromStringWithSourceMap() empty map'] = forEachNewline(
     assert.equal(map.file, util.emptyMap.file);
     assert.equal(map.mappings.length, util.emptyMap.mappings.length);
     assert.equal(map.mappings, util.emptyMap.mappings);
-  }
+  })
 );
 
-exports['test .fromStringWithSourceMap() complex version'] = forEachNewline(
-  function (assert, nl) {
+test(
+  '.fromStringWithSourceMap() complex version',
+  forEachNewline((nl) => {
     var input = new SourceNode(null, null, null, [
       '(function() {' + nl,
       '  var Test = {};' + nl,
@@ -317,12 +325,10 @@ exports['test .fromStringWithSourceMap() complex version'] = forEachNewline(
     map = map.toJSON();
     var inputMap = input.map.toJSON();
     util.assertEqualMaps(assert, map, inputMap);
-  }
+  })
 );
 
-exports[
-  'test .fromStringWithSourceMap() with indexed map offset past end of code'
-] = function (assert) {
+test('.fromStringWithSourceMap() with indexed map offset past end of code', () => {
   // CVE-2026-93749: a section offset.line far past the end of the code must
   // not make fromStringWithSourceMap add empty lines one at a time.
   var map = {
@@ -347,39 +353,38 @@ exports[
   );
   assert.equal(node.toString(), 'var x;\n');
   assert.ok(node.children.length < 10, node.children.length + ' children');
-};
+});
 
-exports['test .fromStringWithSourceMap() with deeply nested indexed map'] =
-  function (assert) {
-    // CVE-2026-93749: nested indexed maps used to make the sources lookup in
-    // fromStringWithSourceMap exponential in the nesting depth.
-    var map = {
-      version: 3,
-      sources: ['a.js'],
-      sourcesContent: ['a'],
-      names: [],
-      mappings: 'AAAA',
-    };
-    for (var i = 0; i < 40; i++) {
-      map = {
-        version: 3,
-        sections: [{ offset: { line: 0, column: 0 }, map: map }],
-      };
-    }
-
-    var node = SourceNode.fromStringWithSourceMap(
-      'var x;\n',
-      new SourceMapConsumer(map)
-    );
-    assert.equal(node.toString(), 'var x;\n');
-    var contents = {};
-    node.walkSourceContents(function (source, content) {
-      contents[source] = content;
-    });
-    assert.deepEqual(contents, { 'a.js': 'a' });
+test('.fromStringWithSourceMap() with deeply nested indexed map', () => {
+  // CVE-2026-93749: nested indexed maps used to make the sources lookup in
+  // fromStringWithSourceMap exponential in the nesting depth.
+  var map = {
+    version: 3,
+    sources: ['a.js'],
+    sourcesContent: ['a'],
+    names: [],
+    mappings: 'AAAA',
   };
+  for (var i = 0; i < 40; i++) {
+    map = {
+      version: 3,
+      sections: [{ offset: { line: 0, column: 0 }, map: map }],
+    };
+  }
 
-exports['test .fromStringWithSourceMap() third argument'] = function (assert) {
+  var node = SourceNode.fromStringWithSourceMap(
+    'var x;\n',
+    new SourceMapConsumer(map)
+  );
+  assert.equal(node.toString(), 'var x;\n');
+  var contents = {};
+  node.walkSourceContents(function (source, content) {
+    contents[source] = content;
+  });
+  assert.deepEqual(contents, { 'a.js': 'a' });
+});
+
+test('.fromStringWithSourceMap() third argument', () => {
   // Assume the following directory structure:
   //
   // http://foo.org/
@@ -437,10 +442,11 @@ exports['test .fromStringWithSourceMap() third argument'] = function (assert) {
   test('.', ['../foo.coffee', 'foo.js']);
 
   test('./', ['../foo.coffee', 'foo.js']);
-};
+});
 
-exports['test .toStringWithSourceMap() merging duplicate mappings'] =
-  forEachNewline(function (assert, nl) {
+test(
+  '.toStringWithSourceMap() merging duplicate mappings',
+  forEachNewline((nl) => {
     var input = new SourceNode(null, null, null, [
       new SourceNode(1, 0, 'a.js', '(function'),
       new SourceNode(1, 0, 'a.js', '() {' + nl),
@@ -524,10 +530,12 @@ exports['test .toStringWithSourceMap() merging duplicate mappings'] =
     var inputMap = input.map.toJSON();
     correctMap = correctMap.toJSON();
     util.assertEqualMaps(assert, inputMap, correctMap);
-  });
+  })
+);
 
-exports['test .toStringWithSourceMap() multi-line SourceNodes'] =
-  forEachNewline(function (assert, nl) {
+test(
+  '.toStringWithSourceMap() multi-line SourceNodes',
+  forEachNewline((nl) => {
     var input = new SourceNode(null, null, null, [
       new SourceNode(
         1,
@@ -609,16 +617,18 @@ exports['test .toStringWithSourceMap() multi-line SourceNodes'] =
     var inputMap = input.map.toJSON();
     correctMap = correctMap.toJSON();
     util.assertEqualMaps(assert, inputMap, correctMap);
-  });
+  })
+);
 
-exports['test .toStringWithSourceMap() with empty string'] = function (assert) {
+test('.toStringWithSourceMap() with empty string', () => {
   var node = new SourceNode(1, 0, 'empty.js', '');
   var result = node.toStringWithSourceMap();
   assert.equal(result.code, '');
-};
+});
 
-exports['test .toStringWithSourceMap() with consecutive newlines'] =
-  forEachNewline(function (assert, nl) {
+test(
+  '.toStringWithSourceMap() with consecutive newlines',
+  forEachNewline((nl) => {
     var input = new SourceNode(null, null, null, [
       '/***/' + nl + nl,
       new SourceNode(1, 0, 'a.js', "'use strict';" + nl),
@@ -647,11 +657,10 @@ exports['test .toStringWithSourceMap() with consecutive newlines'] =
     var inputMap = input.map.toJSON();
     correctMap = correctMap.toJSON();
     util.assertEqualMaps(assert, inputMap, correctMap);
-  });
+  })
+);
 
-exports['test setSourceContent with toStringWithSourceMap'] = function (
-  assert
-) {
+test('setSourceContent with toStringWithSourceMap', () => {
   var aNode = new SourceNode(1, 1, 'a.js', 'a');
   aNode.setSourceContent('a.js', 'someContent');
   var node = new SourceNode(null, null, null, [
@@ -679,9 +688,9 @@ exports['test setSourceContent with toStringWithSourceMap'] = function (
   assert.equal(map.sourcesContent.length, 2);
   assert.equal(map.sourcesContent[0], 'someContent');
   assert.equal(map.sourcesContent[1], 'otherContent');
-};
+});
 
-exports['test walkSourceContents'] = function (assert) {
+test('walkSourceContents', () => {
   var aNode = new SourceNode(1, 1, 'a.js', 'a');
   aNode.setSourceContent('a.js', 'someContent');
   var node = new SourceNode(null, null, null, [
@@ -702,9 +711,9 @@ exports['test walkSourceContents'] = function (assert) {
   assert.equal(results[0][1], 'someContent');
   assert.equal(results[1][0], 'b.js');
   assert.equal(results[1][1], 'otherContent');
-};
+});
 
-exports['test from issue 258'] = function (assert) {
+test('from issue 258', () => {
   var node = new SourceNode();
 
   var reactCode =
@@ -719,4 +728,4 @@ exports['test from issue 258'] = function (assert) {
       new SourceMapConsumer(reactMap)
     )
   );
-};
+});
