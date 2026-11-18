@@ -55,8 +55,8 @@
   },
   "license": "BSD-3-Clause",
   "scripts": {
-    "test": "node --test 'test/test-*.js'",
-    "test:coverage": "node --experimental-config-file=node.config.json --test --experimental-test-coverage 'test/test-*.js'",
+    "test": "node --test --test-reporter=spec 'test/test-*.js'",
+    "test:coverage": "node --experimental-config-file=node.config.json --test --test-reporter=spec --experimental-test-coverage 'test/test-*.js'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "toc": "doctoc --title '## Table of Contents' README.md && prettier --write README.md"
