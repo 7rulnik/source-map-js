@@ -1,0 +1,5 @@
+# Commits that only reformat code. GitHub skips these in blame views; locally,
+# run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once.
+
+# Set up Prettier and format the codebase (https://github.com/7rulnik/source-map-js/pull/88)
+817c1e13dedcbcaa2d9b56a6782dda0862461252
