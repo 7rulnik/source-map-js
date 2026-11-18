@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.2.3
+
+* Fix CSP violation reported in browsers that don't permit unsafe-eval ([#85](https://github.com/7rulnik/source-map-js/pull/85))
+
+  Reported by [@Viktor-Ivliev](https://github.com/Viktor-Ivliev) in [#81](https://github.com/7rulnik/source-map-js/issues/81). The library no longer uses `new Function` at all. As a side effect, sorting mappings is ~40% faster on Node 22, 24 and 26: consuming source maps is up to 40% faster, and `SourceMapConsumer.fromSourceMap` 20–40% faster.
+
 ## 1.2.2
 
 * Fix crash when executing in browser with CSP script-src that don't permit unsafe-eval ([#29](https://github.com/7rulnik/source-map-js/pull/29)) [@xfournet](https://github.com/xfournet)
