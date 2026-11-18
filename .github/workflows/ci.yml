@@ -24,10 +24,18 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    # Prerelease Node versions report failures without failing the run.
+    continue-on-error: ${{ matrix.prerelease == true }}
     strategy:
       fail-fast: false
       matrix:
         node: [22, 24, 26]
+        include:
+          # Node 27 has no stable release yet, and a `27` range skips
+          # prereleases, so the alpha is pinned. Move 27 into `node` above once
+          # 27.0.0 is out.
+          - node: 27.0.0-alpha.0.1.1
+            prerelease: true
     steps:
       - uses: actions/checkout@v7
         with:
