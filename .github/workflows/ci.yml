@@ -22,6 +22,19 @@ jobs:
           require-lockfile: true
       - run: pnpm format:check
 
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@lts
+          cache: true
+          require-lockfile: true
+      - run: pnpm test:coverage
+
   test:
     runs-on: ubuntu-latest
     # Prerelease Node versions report failures without failing the run.

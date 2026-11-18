@@ -1,0 +1,9 @@
+{
+  "$schema": "https://nodejs.org/dist/v26.13.1/docs/node-config-schema.json",
+  "nodeOptions": {
+    "test-coverage-include": ["lib/**/*.js", "source-map.js"],
+    "test-coverage-lines": 94,
+    "test-coverage-branches": 91,
+    "test-coverage-functions": 95
+  }
+}
