@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@lts
+          cache: true
+          require-lockfile: true
+      - run: pnpm format:check
+
+  test:
+    runs-on: ubuntu-latest
+    # Prerelease Node versions report failures without failing the run.
+    continue-on-error: ${{ matrix.prerelease == true }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
+        include:
+          # Node 27 has no stable release yet; pnpm resolves `27` to the
+          # latest 27 alpha until it does. Move 27 into `node` above once
+          # 27.0.0 is out.
+          - node: 27
+            prerelease: true
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: pnpm/setup@v3
+        with:
+          runtime: node@${{ matrix.node }}
+          cache: true
+          require-lockfile: true
+      - run: pnpm test
