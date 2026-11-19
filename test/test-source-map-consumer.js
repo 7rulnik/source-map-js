@@ -1134,6 +1134,51 @@ test('allGeneratedPositionsFor for empty source map', () => {
   assert.equal(mappings.length, 0);
 });
 
+// https://github.com/7rulnik/source-map-js/issues/83
+test('original-position lookups when an earlier source has no mappings', () => {
+  // gen 1:0 -> b.js 1:0; a.js has no mappings.
+  var map = {
+    version: 3,
+    names: [],
+    sources: ['a.js', 'b.js'],
+    mappings: 'ACAA',
+  };
+
+  assert.deepStrictEqual(
+    new SourceMapConsumer(map).generatedPositionFor({
+      source: 'b.js',
+      line: 1,
+      column: 0,
+    }),
+    { line: 1, column: 0, lastColumn: null }
+  );
+  assert.deepStrictEqual(
+    new SourceMapConsumer(map).generatedPositionFor({
+      source: 'a.js',
+      line: 1,
+      column: 0,
+    }),
+    { line: null, column: null, lastColumn: null }
+  );
+  assert.deepStrictEqual(
+    new SourceMapConsumer(map).allGeneratedPositionsFor({
+      source: 'b.js',
+      line: 1,
+    }),
+    [{ line: 1, column: 0, lastColumn: null }]
+  );
+
+  var sources = [];
+  new SourceMapConsumer(map).eachMapping(
+    function (m) {
+      sources.push(m.source);
+    },
+    null,
+    SourceMapConsumer.ORIGINAL_ORDER
+  );
+  assert.deepStrictEqual(sources, ['b.js']);
+});
+
 test('allGeneratedPositionsFor for column', () => {
   var map = new SourceMapGenerator({
     file: 'generated.js',
