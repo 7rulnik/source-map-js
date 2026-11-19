@@ -125,7 +125,7 @@ export class SourceMapConsumer {
   allGeneratedPositionsFor(
     originalPosition:
       MappedPosition | { source: string; line: number; column?: number }
-  ): Array<Position & { lastColumn: number | null }>;
+  ): Array<Position & { lastColumn?: number | null }>;
   hasContentsOfAllSources(): boolean;
   sourceContentFor(
     source: string,
@@ -195,13 +195,10 @@ export class SourceNode {
     sourceMapConsumer: SourceMapConsumer,
     relativePath?: string
   ): SourceNode;
-  children: (string | SourceNode)[];
-  line: number | null;
-  column: number | null;
-  source: string | null;
-  name: string | null;
-  add(chunk: SourceNodeChunk): SourceNode;
-  prepend(chunk: SourceNodeChunk): SourceNode;
+  /** Returns this node at runtime. */
+  add(chunk: SourceNodeChunk): void;
+  /** Returns this node at runtime. */
+  prepend(chunk: SourceNodeChunk): void;
   setSourceContent(sourceFile: string, sourceContent: string): void;
   /**
    * At runtime, `source`, `line`, `column` and `name` are `null` for chunks
