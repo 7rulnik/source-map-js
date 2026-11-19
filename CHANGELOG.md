@@ -1,5 +1,56 @@
 # Change Log
 
+## 1.2.4
+
+### Index source maps
+
+- Fix `originalPositionFor` returning nulls at the first column of a section ([#99](https://github.com/7rulnik/source-map-js/pull/99))
+
+  Reported by [@trackoor](https://github.com/trackoor) in [#82](https://github.com/7rulnik/source-map-js/issues/82).
+
+- Fix a section's column offset being applied to its second line instead of its first ([#104](https://github.com/7rulnik/source-map-js/pull/104))
+
+  This affected sections with both a line and a column offset, in `eachMapping`, `generatedPositionFor`, `SourceMapGenerator.fromSourceMap` and `SourceNode.fromStringWithSourceMap`.
+
+- Support `allGeneratedPositionsFor` ([#105](https://github.com/7rulnik/source-map-js/pull/105))
+
+  It threw `TypeError: this._findSourceIndex is not a function`. It now returns the same results as for the equivalent map without sections, with positions from every section that has the source. `generatedPositionFor` on nested index maps threw the same error and works now too.
+
+- Fix `generatedPositionFor` returning made-up positions ([#115](https://github.com/7rulnik/source-map-js/pull/115))
+
+  It only searched the first section that listed the source, and when that section had no match, it returned the section offset added to `null`. It now searches all sections, so `bias` picks the closest mapping across them, and returns nulls when nothing matches.
+
+- Add `computeColumnSpans` ([#116](https://github.com/7rulnik/source-map-js/pull/116))
+
+### Other fixes
+
+- Fix `generatedPositionFor`, `allGeneratedPositionsFor` and `eachMapping` with `ORIGINAL_ORDER` throwing `TypeError` when a source has no mappings ([#100](https://github.com/7rulnik/source-map-js/pull/100))
+
+  Reported by [@trackoor](https://github.com/trackoor) in [#83](https://github.com/7rulnik/source-map-js/issues/83). This is common in bundles, where a source can be listed after its code was tree-shaken away.
+
+- Fix `allGeneratedPositionsFor` returning positions that belong to a different source ([#102](https://github.com/7rulnik/source-map-js/pull/102))
+
+- Fix lookups throwing `RangeError: Maximum call stack size exceeded` on source maps with about 200,000 or more sources ([#113](https://github.com/7rulnik/source-map-js/pull/113))
+
+- Fix `SourceNode#replaceRight` throwing on a node without children ([#114](https://github.com/7rulnik/source-map-js/pull/114))
+
+### TypeScript
+
+- Fix type definitions that didn't match the runtime, without breaking changes ([#117](https://github.com/7rulnik/source-map-js/pull/117))
+
+  - `SourceMapConsumer` accepts `version` as a number, `null` entries in `sourcesContent`, a missing `names`, index maps, JSON strings and the `sourceMapUrl` argument. Reported by [@linsk1998](https://github.com/linsk1998) in [#43](https://github.com/7rulnik/source-map-js/issues/43); a fix for `sourcesContent` was proposed by [@lahmatiy](https://github.com/lahmatiy) in [#75](https://github.com/7rulnik/source-map-js/pull/75).
+  - `SourceMapConsumer.fromSourceMap` is declared, and `allGeneratedPositionsFor` takes an optional `column` and returns `lastColumn`.
+  - The `skipValidation` and `ignoreInvalidMapping` options of `SourceMapGenerator` are typed.
+  - `SourceNode` accepts `null`s and chunk arrays in the constructor, nested arrays in `add` and `prepend`, and a RegExp or a replacer function in `replaceRight`.
+
+  Return types that would need a breaking change, such as the `null`s from `originalPositionFor` ([#30](https://github.com/7rulnik/source-map-js/issues/30)), are documented in comments and left for the next major ([#118](https://github.com/7rulnik/source-map-js/issues/118)).
+
+### Package
+
+- Set `engines.node` to `>=6.0.0` ([#97](https://github.com/7rulnik/source-map-js/pull/97))
+
+  The library already failed to load on older Node versions, so this only adds an install warning there.
+
 ## 1.2.3
 
 - Fix CSP violation reported in browsers that don't permit unsafe-eval ([#85](https://github.com/7rulnik/source-map-js/pull/85))
