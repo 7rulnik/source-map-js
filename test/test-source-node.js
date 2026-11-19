@@ -150,6 +150,21 @@ test('.replaceRight', () => {
   assert.equal(node.toString(), 'hey sexy mama, want to watch Futurama?');
 });
 
+// https://github.com/7rulnik/source-map-js/issues/109
+test('.replaceRight on a node without children', () => {
+  var node = new SourceNode();
+  assert.strictEqual(node.replaceRight(/x/, 'y'), node);
+  assert.equal(node.toString(), '');
+
+  // The replacement applies to an empty string.
+  assert.equal(new SourceNode().replaceRight(/$/, ';').toString(), ';');
+
+  // An empty node as the last child.
+  node = new SourceNode(null, null, null, ['a', new SourceNode()]);
+  node.replaceRight(/$/, ';');
+  assert.equal(node.toString(), 'a;');
+});
+
 test(
   '.toStringWithSourceMap()',
   forEachNewline((nl) => {
