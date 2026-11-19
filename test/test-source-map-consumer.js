@@ -323,11 +323,11 @@ test('a section column offset only applies to the first line of the section', ()
 
   assert.deepStrictEqual(
     map.generatedPositionFor({ source: 'b.js', line: 1, column: 0 }),
-    { line: 2, column: 4 }
+    { line: 2, column: 4, lastColumn: null }
   );
   assert.deepStrictEqual(
     map.generatedPositionFor({ source: 'b.js', line: 2, column: 0 }),
-    { line: 3, column: 0 }
+    { line: 3, column: 0, lastColumn: null }
   );
 
   // originalPositionFor already applied the offset to the right line.
@@ -1404,7 +1404,67 @@ test('allGeneratedPositionsFor on an indexed source map searches every section',
       version: 3,
       sections: nested,
     }).generatedPositionFor({ source: 'n.js', line: 1, column: 0 }),
-    { line: 2, column: 2 }
+    { line: 2, column: 2, lastColumn: null }
+  );
+});
+
+// https://github.com/7rulnik/source-map-js/issues/106
+test('generatedPositionFor on an indexed source map when a section has no match', () => {
+  // b.js is only mapped at original line 5: nothing at or before line 1.
+  var one = new SourceMapConsumer({
+    version: 3,
+    sections: [
+      section(0, 0, ['a.js'], 'AAAA'),
+      section(5, 3, ['b.js'], 'AAIA'),
+    ],
+  });
+  assert.deepStrictEqual(
+    one.generatedPositionFor({ source: 'b.js', line: 1, column: 0 }),
+    { line: null, column: null, lastColumn: null }
+  );
+
+  // a.js is in two sections. The first only maps original line 5, the second
+  // maps 1:0 exactly.
+  var two = new SourceMapConsumer({
+    version: 3,
+    sections: [
+      section(0, 0, ['a.js'], 'AAIA'),
+      section(3, 0, ['a.js'], 'AAAA'),
+    ],
+  });
+  assert.deepStrictEqual(
+    two.generatedPositionFor({ source: 'a.js', line: 1, column: 0 }),
+    { line: 4, column: 0, lastColumn: null }
+  );
+});
+
+test('generatedPositionFor on an indexed source map matches the same map without sections', () => {
+  var basic = new SourceMapConsumer(util.testMap);
+  var indexed = new SourceMapConsumer(util.indexedTestMap);
+  var biases = [
+    SourceMapConsumer.GREATEST_LOWER_BOUND,
+    SourceMapConsumer.LEAST_UPPER_BOUND,
+  ];
+  ['one.js', 'two.js', '/the/root/one.js', 'missing.js'].forEach(
+    function (source) {
+      for (var line = 1; line <= 3; line++) {
+        [0, 1, 11, 99].forEach(function (column) {
+          biases.forEach(function (bias) {
+            var args = {
+              source: source,
+              line: line,
+              column: column,
+              bias: bias,
+            };
+            assert.deepStrictEqual(
+              indexed.generatedPositionFor(args),
+              basic.generatedPositionFor(args),
+              JSON.stringify(args)
+            );
+          });
+        });
+      }
+    }
   );
 });
 
