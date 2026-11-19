@@ -15,6 +15,37 @@ var BasicSourceMapConsumer =
   require('../lib/source-map-consumer').BasicSourceMapConsumer;
 var SourceMapGenerator =
   require('../lib/source-map-generator').SourceMapGenerator;
+var base64VLQ = require('../lib/base64-vlq');
+
+// Encode a single generated line whose segments have the given generated
+// columns, in the given (possibly unsorted) order. Segments carry no source.
+function makeUnsortedSingleLineMappings(gens) {
+  var out = '';
+  var prev = 0;
+  for (var i = 0; i < gens.length; i++) {
+    if (i > 0) out += ',';
+    out += base64VLQ.encode(gens[i] - prev);
+    prev = gens[i];
+  }
+  return out;
+}
+
+function unsortedSegmentMap(generatedColumns) {
+  return {
+    version: 3,
+    sources: [],
+    names: [],
+    mappings: makeUnsortedSingleLineMappings(generatedColumns),
+  };
+}
+
+function sortedColumns(consumer) {
+  var cols = [];
+  consumer.eachMapping(function (m) {
+    cols.push(m.generatedColumn);
+  });
+  return cols;
+}
 
 test('that we can instantiate with a string or an object', () => {
   assert.doesNotThrow(function () {
@@ -1798,4 +1829,315 @@ test('absolute sourceURL resolution with sourceMapURL', () => {
 
   assert.equal(consumer.sources.length, 1);
   assert.equal(consumer.sources[0], 'http://www.example.com/src/something.js');
+});
+
+test('BasicSourceMapConsumer accepts a JSON string directly', () => {
+  var map = new BasicSourceMapConsumer(JSON.stringify(util.testMap));
+  assert.equal(map.sources.length, 2);
+});
+
+test('BasicSourceMapConsumer throws on unsupported version', () => {
+  assert.throws(
+    () =>
+      new BasicSourceMapConsumer({
+        version: 2,
+        sources: ['a.js'],
+        names: [],
+        mappings: '',
+      }),
+    /Unsupported version: 2/
+  );
+});
+
+test('IndexedSourceMapConsumer accepts a JSON string directly', () => {
+  var map = new IndexedSourceMapConsumer(JSON.stringify(util.indexedTestMap));
+  assert.equal(map.sources.length, 2);
+});
+
+test('IndexedSourceMapConsumer throws on unsupported version', () => {
+  assert.throws(
+    () =>
+      new IndexedSourceMapConsumer({
+        version: 2,
+        sections: [],
+      }),
+    /Unsupported version: 2/
+  );
+});
+
+test('BasicSourceMapConsumer sorts a 2-segment line whose generated columns are out of order', () => {
+  var map = unsortedSegmentMap([5, 2]);
+  var consumer = new SourceMapConsumer(map);
+  assert.deepStrictEqual(sortedColumns(consumer), [2, 5]);
+});
+
+test('BasicSourceMapConsumer sorts a small line (n<20) whose generated columns are out of order', () => {
+  var unsorted = [10, 2, 7, 1, 9, 3, 8, 4, 6, 5];
+  var map = unsortedSegmentMap(unsorted);
+  var consumer = new SourceMapConsumer(map);
+  assert.deepStrictEqual(
+    sortedColumns(consumer),
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  );
+});
+
+test('BasicSourceMapConsumer sorts a large line (n>=20) whose generated columns are out of order', () => {
+  var unsorted = [];
+  for (var i = 30; i >= 1; i--) unsorted.push(i);
+  var map = unsortedSegmentMap(unsorted);
+  var consumer = new SourceMapConsumer(map);
+  var expected = [];
+  for (var j = 1; j <= 30; j++) expected.push(j);
+  assert.deepStrictEqual(sortedColumns(consumer), expected);
+});
+
+test('BasicSourceMapConsumer sorts originalMappings when generated and original orders disagree', () => {
+  // Segment 1: genCol=0, srcIdx=0, origLineDelta=10 (→ origLine 11), origCol=0
+  // Segment 2: genColDelta=5, srcIdxDelta=0, origLineDelta=-5 (→ origLine 6), origCol=0
+  var seg1 =
+    base64VLQ.encode(0) +
+    base64VLQ.encode(0) +
+    base64VLQ.encode(10) +
+    base64VLQ.encode(0);
+  var seg2 =
+    base64VLQ.encode(5) +
+    base64VLQ.encode(0) +
+    base64VLQ.encode(-5) +
+    base64VLQ.encode(0);
+  var consumer = new SourceMapConsumer({
+    version: 3,
+    sources: ['x.js'],
+    names: [],
+    mappings: seg1 + ',' + seg2,
+  });
+
+  var lines = [];
+  consumer.eachMapping(
+    function (m) {
+      lines.push(m.originalLine);
+    },
+    null,
+    SourceMapConsumer.ORIGINAL_ORDER
+  );
+  assert.deepStrictEqual(lines, [6, 11]);
+});
+
+test('IndexedSourceMapConsumer sorts per-source originalMappings when bucket is out of order', () => {
+  var seg1 =
+    base64VLQ.encode(0) +
+    base64VLQ.encode(0) +
+    base64VLQ.encode(10) +
+    base64VLQ.encode(0);
+  var seg2 =
+    base64VLQ.encode(5) +
+    base64VLQ.encode(0) +
+    base64VLQ.encode(-5) +
+    base64VLQ.encode(0);
+  var consumer = new SourceMapConsumer({
+    version: 3,
+    sections: [
+      {
+        offset: { line: 0, column: 0 },
+        map: {
+          version: 3,
+          sources: ['x.js'],
+          names: [],
+          mappings: seg1 + ',' + seg2,
+        },
+      },
+    ],
+  });
+
+  var lines = [];
+  consumer.eachMapping(
+    function (m) {
+      lines.push(m.originalLine);
+    },
+    null,
+    SourceMapConsumer.ORIGINAL_ORDER
+  );
+  assert.deepStrictEqual(lines, [6, 11]);
+});
+
+test('BasicSourceMapConsumer.fromSourceMap handles source-less mappings', () => {
+  var smg = new SourceMapGenerator({ file: 'foo.js' });
+  // Case-1 mapping per _validateMapping: only generated position.
+  smg.addMapping({ generated: { line: 1, column: 0 } });
+  smg.addMapping({
+    source: 'x.js',
+    original: { line: 1, column: 0 },
+    generated: { line: 1, column: 5 },
+  });
+
+  var smc = SourceMapConsumer.fromSourceMap(smg);
+  // Source-less mapping survives the round-trip with source/name null.
+  var lines = [];
+  smc.eachMapping(function (m) {
+    lines.push({ gc: m.generatedColumn, src: m.source, name: m.name });
+  });
+  assert.deepStrictEqual(lines, [
+    { gc: 0, src: null, name: null },
+    { gc: 5, src: 'x.js', name: null },
+  ]);
+});
+
+test('BasicSourceMapConsumer.fromSourceMap sorts per-source originalMappings when bucket is out of order', () => {
+  var smg = new SourceMapGenerator({ file: 'foo.js' });
+  smg.addMapping({
+    source: 'x.js',
+    original: { line: 11, column: 0 },
+    generated: { line: 1, column: 0 },
+  });
+  smg.addMapping({
+    source: 'x.js',
+    original: { line: 6, column: 0 },
+    generated: { line: 1, column: 5 },
+  });
+
+  var consumer = SourceMapConsumer.fromSourceMap(smg);
+  var lines = [];
+  consumer.eachMapping(
+    function (m) {
+      lines.push(m.originalLine);
+    },
+    null,
+    SourceMapConsumer.ORIGINAL_ORDER
+  );
+  assert.deepStrictEqual(lines, [6, 11]);
+});
+
+test('_charIsMappingSeparator returns true for ; and , and false otherwise', () => {
+  var consumer = new SourceMapConsumer(util.testMap);
+  assert.strictEqual(consumer._charIsMappingSeparator('a;b', 1), true);
+  assert.strictEqual(consumer._charIsMappingSeparator('a,b', 1), true);
+  assert.strictEqual(consumer._charIsMappingSeparator('abc', 1), false);
+  assert.strictEqual(consumer._charIsMappingSeparator('', 0), false);
+});
+
+test('sourceContentFor returnNullOnMissing on basic source map', () => {
+  var map = new SourceMapConsumer(util.testMapWithSourcesContent);
+
+  assert.equal(
+    map.sourceContentFor('one.js', true),
+    ' ONE.foo = function (bar) {\n   return baz(bar);\n };'
+  );
+  assert.equal(map.sourceContentFor('', true), null);
+  assert.equal(map.sourceContentFor('/the/root/three.js', true), null);
+  assert.equal(map.sourceContentFor('three.js', true), null);
+});
+
+test('sourceContentFor returnNullOnMissing on basic source map with relative sources', () => {
+  var map = new SourceMapConsumer(util.testMapRelativeSources);
+
+  assert.equal(
+    map.sourceContentFor('one.js', true),
+    ' ONE.foo = function (bar) {\n   return baz(bar);\n };'
+  );
+  assert.equal(map.sourceContentFor('', true), null);
+  assert.equal(map.sourceContentFor('/the/root/three.js', true), null);
+  assert.equal(map.sourceContentFor('three.js', true), null);
+});
+
+test('sourceContentFor returnNullOnMissing on indexed source map', () => {
+  var map = new SourceMapConsumer(util.indexedTestMap);
+
+  assert.equal(
+    map.sourceContentFor('one.js', true),
+    ' ONE.foo = function (bar) {\n   return baz(bar);\n };'
+  );
+  assert.equal(map.sourceContentFor('', true), null);
+  assert.equal(map.sourceContentFor('/the/root/three.js', true), null);
+  assert.equal(map.sourceContentFor('three.js', true), null);
+});
+
+test('eachMapping throws on unknown order', () => {
+  var map = new SourceMapConsumer(util.testMap);
+  assert.throws(
+    () => map.eachMapping(() => {}, null, 'NOPE'),
+    /Unknown order of iteration/
+  );
+});
+
+test('originalPositionFor rejects non-positive line and negative column', () => {
+  var map = new SourceMapConsumer(util.testMap);
+  assert.throws(
+    () => map.originalPositionFor({ line: 0, column: 0 }),
+    /Line must be greater than or equal to 1/
+  );
+  assert.throws(
+    () => map.originalPositionFor({ line: 1, column: -1 }),
+    /Column must be greater than or equal to 0/
+  );
+});
+
+test('generatedPositionFor returns nulls for unknown source', () => {
+  var map = new SourceMapConsumer(util.testMap);
+  var pos = map.generatedPositionFor({
+    source: 'no-such-source.js',
+    line: 1,
+    column: 0,
+  });
+  assert.equal(pos.line, null);
+  assert.equal(pos.column, null);
+  assert.equal(pos.lastColumn, null);
+});
+
+test('sourceContentFor resolves file:// URIs back to known sources', () => {
+  // sourceRoot is a file:// URL but the source's absolute path lives outside
+  // it. Looking up by `file://<absolute-path>` should still find the content
+  // by stripping the `file://` prefix.
+  var map = new SourceMapConsumer({
+    version: 3,
+    file: 'min.js',
+    sourceRoot: 'file:///the/root',
+    sources: ['/elsewhere/one.js'],
+    sourcesContent: ['ONE_CONTENT'],
+    names: [],
+    mappings: 'CAAC',
+  });
+  assert.equal(map.sourceContentFor('file:///elsewhere/one.js'), 'ONE_CONTENT');
+});
+
+test('IndexedSourceMapConsumer.hasContentsOfAllSources walks sections', () => {
+  var withContent = new SourceMapConsumer(util.indexedTestMap);
+  assert.ok(withContent.hasContentsOfAllSources());
+
+  // Strip sourcesContent from one section to force the false branch.
+  var partial = JSON.parse(JSON.stringify(util.indexedTestMap));
+  delete partial.sections[1].map.sourcesContent;
+  var withoutAll = new SourceMapConsumer(partial);
+  assert.ok(!withoutAll.hasContentsOfAllSources());
+});
+
+test('IndexedSourceMapConsumer.originalPositionFor returns nulls when needle is below all sections', () => {
+  // Build an indexed map whose first section starts at generatedLine 5
+  // so that line 1 falls below every section.
+  var shifted = JSON.parse(JSON.stringify(util.indexedTestMap));
+  shifted.sections[0].offset.line = 4;
+  shifted.sections[1].offset.line = 5;
+  var map = new SourceMapConsumer(shifted);
+
+  var pos = map.originalPositionFor({ line: 1, column: 0 });
+  assert.equal(pos.source, null);
+  assert.equal(pos.line, null);
+  assert.equal(pos.column, null);
+  assert.equal(pos.name, null);
+});
+
+test('IndexedSourceMapConsumer.generatedPositionFor returns nulls when source is in no section', () => {
+  var map = new SourceMapConsumer(util.indexedTestMap);
+  var pos = map.generatedPositionFor({
+    source: 'no-such-source.js',
+    line: 1,
+    column: 0,
+  });
+  assert.equal(pos.line, null);
+  assert.equal(pos.column, null);
+});
+
+test('SourceMapConsumer.prototype._parseMappings must be implemented by subclasses', () => {
+  assert.throws(
+    () => SourceMapConsumer.prototype._parseMappings.call({}, '', null),
+    /Subclasses must implement _parseMappings/
+  );
 });

@@ -88,6 +88,23 @@ test('adding mappings (invalid)', () => {
   assert.throws(function () {
     map.addMapping({});
   });
+
+  // original present but generated missing source -> invalid mapping branch.
+  assert.throws(function () {
+    map.addMapping({
+      generated: { line: 1, column: 1 },
+      original: { line: 1, column: 1 },
+    });
+  }, /Invalid mapping/);
+
+  // original.line / original.column not numbers -> dedicated error message.
+  assert.throws(function () {
+    map.addMapping({
+      generated: { line: 1, column: 1 },
+      original: { line: null, column: null },
+      source: 'a.js',
+    });
+  }, /original\.line and original\.column are not numbers/);
 });
 
 test('adding mappings with skipValidation', () => {
@@ -873,4 +890,82 @@ test('copying an indexed map with a large section offset into a generator', () =
   var mappings = map.toJSON().mappings;
   assert.equal(mappings.length, 1e7 + 4);
   assert.equal(mappings.slice(-5), ';AAAA');
+});
+
+test('SourceMapGenerator.applySourceMap passes source-less mappings through unchanged', () => {
+  // Inner map: x.js → y.js
+  var inner = new SourceMapGenerator({ file: 'x.js' });
+  inner.addMapping({
+    source: 'y.js',
+    original: { line: 1, column: 0 },
+    generated: { line: 1, column: 0 },
+  });
+  var innerConsumer = new SourceMapConsumer(inner.toJSON());
+
+  // Outer generator has a source-less mapping alongside an x.js mapping.
+  var outer = new SourceMapGenerator({ file: 'foo.js' });
+  outer.addMapping({ generated: { line: 1, column: 0 } }); // source-less
+  outer.addMapping({
+    source: 'x.js',
+    original: { line: 1, column: 0 },
+    generated: { line: 1, column: 5 },
+  });
+
+  outer.applySourceMap(innerConsumer);
+
+  var result = new SourceMapConsumer(outer.toJSON());
+  var seen = [];
+  result.eachMapping(function (m) {
+    seen.push({ gc: m.generatedColumn, src: m.source });
+  });
+  assert.deepStrictEqual(seen, [
+    { gc: 0, src: null }, // source-less mapping survives unchanged
+    { gc: 5, src: 'y.js' }, // x.js mapping got transformed via inner
+  ]);
+});
+
+test('adding invalid mappings with ignoreInvalidMapping', () => {
+  var map = new SourceMapGenerator({
+    file: 'generated-foo.js',
+    sourceRoot: '.',
+    ignoreInvalidMapping: true,
+  });
+
+  // Capture console.warn so the warning paths execute without leaking output.
+  var originalWarn = console.warn;
+  var warnings = [];
+  console.warn = function (msg) {
+    warnings.push(msg);
+  };
+  try {
+    // Hits the original.line/column-not-numbers warn branch.
+    assert.doesNotThrow(function () {
+      map.addMapping({
+        generated: { line: 1, column: 1 },
+        original: { line: null, column: null },
+        source: 'a.js',
+      });
+    });
+
+    // Hits the generic invalid-mapping warn branch.
+    assert.doesNotThrow(function () {
+      map.addMapping({
+        generated: { line: 1, column: 1 },
+        original: { line: 1, column: 1 },
+      });
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  assert.equal(warnings.length, 2);
+  assert.match(
+    warnings[0],
+    /original\.line and original\.column are not numbers/
+  );
+  assert.match(warnings[1], /Invalid mapping/);
+
+  // The skipped mappings should not have produced any output.
+  var serialized = JSON.parse(map.toString());
+  assert.equal(serialized.mappings, '');
 });
