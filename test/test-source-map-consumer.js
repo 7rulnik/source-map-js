@@ -1257,6 +1257,130 @@ test('allGeneratedPositionsFor never returns positions of another source', () =>
   );
 });
 
+function generatedPositions(sections, args) {
+  return new SourceMapConsumer({ version: 3, sections: sections })
+    .allGeneratedPositionsFor(args)
+    .map(function (p) {
+      return [p.line, p.column];
+    });
+}
+
+function section(line, column, sources, mappings) {
+  return {
+    offset: { line: line, column: column },
+    map: { version: 3, names: [], sources: sources, mappings: mappings },
+  };
+}
+
+// https://github.com/7rulnik/source-map-js/issues/103
+test('allGeneratedPositionsFor on an indexed source map', () => {
+  var sections = [
+    section(0, 0, ['a.js'], 'AAAA'),
+    section(1, 4, ['b.js'], 'AAAA'),
+  ];
+  assert.deepStrictEqual(
+    new SourceMapConsumer({
+      version: 3,
+      sections: sections,
+    }).allGeneratedPositionsFor({ source: 'a.js', line: 1 }),
+    [{ line: 1, column: 0, lastColumn: null }]
+  );
+  assert.deepStrictEqual(
+    generatedPositions(sections, { source: 'b.js', line: 1 }),
+    [[2, 4]]
+  );
+  assert.deepStrictEqual(
+    generatedPositions(sections, { source: 'b.js', line: 1, column: 0 }),
+    [[2, 4]]
+  );
+  assert.deepStrictEqual(
+    generatedPositions(sections, { source: 'nope.js', line: 1 }),
+    []
+  );
+});
+
+test('allGeneratedPositionsFor on an indexed source map matches the same map without sections', () => {
+  var basic = new SourceMapConsumer(util.testMap);
+  var indexed = new SourceMapConsumer(util.indexedTestMap);
+  var sources = ['one.js', 'two.js', '/the/root/one.js', 'missing.js'];
+  sources.forEach(function (source) {
+    for (var line = 1; line <= 3; line++) {
+      [undefined, 0, 1, 11, 99].forEach(function (column) {
+        var args = { source: source, line: line };
+        if (column !== undefined) {
+          args.column = column;
+        }
+        assert.deepStrictEqual(
+          indexed.allGeneratedPositionsFor(args),
+          basic.allGeneratedPositionsFor(args),
+          JSON.stringify(args)
+        );
+      });
+    }
+  });
+});
+
+test('allGeneratedPositionsFor on an indexed source map searches every section', () => {
+  // a.js is in both sections.
+  assert.deepStrictEqual(
+    generatedPositions(
+      [section(0, 0, ['a.js'], 'AAAA'), section(2, 0, ['a.js'], 'AAAA')],
+      { source: 'a.js', line: 1 }
+    ),
+    [
+      [1, 0],
+      [3, 0],
+    ]
+  );
+
+  // Without a column, the closest line at or after the requested one is
+  // picked across all sections: a.js line 3 in the first section, not line 1
+  // in the second.
+  var fuzzy = [
+    section(0, 0, ['a.js'], 'AAEA'),
+    section(1, 0, ['a.js'], 'AAAA'),
+  ];
+  assert.deepStrictEqual(
+    generatedPositions(fuzzy, { source: 'a.js', line: 2 }),
+    [[1, 0]]
+  );
+  assert.deepStrictEqual(
+    generatedPositions(fuzzy, { source: 'a.js', line: 1 }),
+    [[2, 0]]
+  );
+
+  // Listed in a section, but without mappings.
+  assert.deepStrictEqual(
+    generatedPositions([section(0, 0, ['a.js', 'c.js'], 'AAAA')], {
+      source: 'c.js',
+      line: 1,
+    }),
+    []
+  );
+
+  // A nested indexed source map.
+  var nested = [
+    section(0, 0, ['x.js'], 'AAAA'),
+    {
+      offset: { line: 1, column: 0 },
+      map: { version: 3, sections: [section(0, 2, ['n.js'], 'AAAA')] },
+    },
+  ];
+  assert.deepStrictEqual(
+    generatedPositions(nested, { source: 'n.js', line: 1 }),
+    [[2, 2]]
+  );
+  // generatedPositionFor calls _findSourceIndex on each section's consumer,
+  // so on a nested map it threw until indexed consumers had one.
+  assert.deepStrictEqual(
+    new SourceMapConsumer({
+      version: 3,
+      sections: nested,
+    }).generatedPositionFor({ source: 'n.js', line: 1, column: 0 }),
+    { line: 2, column: 2 }
+  );
+});
+
 test('allGeneratedPositionsFor for column', () => {
   var map = new SourceMapGenerator({
     file: 'generated.js',
