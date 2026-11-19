@@ -1,0 +1,12 @@
+{
+  "name": "source-map-js-benchmarks",
+  "private": true,
+  "description": "Libraries that pnpm bench:compare measures source-map-js against",
+  "dependencies": {
+    "@jridgewell/gen-mapping": "0.3.13",
+    "@jridgewell/source-map": "0.3.11",
+    "@jridgewell/trace-mapping": "0.3.31",
+    "source-map-0.6": "npm:source-map@0.6.1",
+    "source-map-0.8": "npm:source-map@0.8.0"
+  }
+}
