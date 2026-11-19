@@ -1179,6 +1179,33 @@ test('original-position lookups when an earlier source has no mappings', () => {
   assert.deepStrictEqual(sources, ['b.js']);
 });
 
+// https://github.com/7rulnik/source-map-js/issues/107
+test('lookups on a source map with 300,000 sources', () => {
+  var n = 300000;
+  var sources = [];
+  for (var i = 0; i < n; i++) {
+    sources.push('s' + i + '.js');
+  }
+  // Generated 1:i -> s{i}.js 1:0, one mapping per source.
+  var map = new SourceMapConsumer({
+    version: 3,
+    names: [],
+    sources: sources,
+    mappings: ('AAAA,' + 'CCAA,'.repeat(n - 1)).slice(0, -1),
+  });
+
+  assert.deepStrictEqual(
+    map.generatedPositionFor({
+      source: 's' + (n - 1) + '.js',
+      line: 1,
+      column: 0,
+    }),
+    { line: 1, column: n - 1, lastColumn: null }
+  );
+  var pos = map.originalPositionFor({ line: 1, column: 1 });
+  assert.deepStrictEqual([pos.source, pos.line, pos.column], ['s1.js', 1, 0]);
+});
+
 // https://github.com/7rulnik/source-map-js/issues/101
 test('allGeneratedPositionsFor never returns positions of another source', () => {
   // gen 1:0 -> a.js 1:0, gen 1:1 -> b.js 1:3
