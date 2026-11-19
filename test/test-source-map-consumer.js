@@ -289,6 +289,52 @@ test('originalPositionFor at the exact start of a section in an indexed source m
   assert.deepStrictEqual(original(2, 3), [null, null, null]);
 });
 
+test('a section column offset only applies to the first line of the section', () => {
+  var map = new SourceMapConsumer({
+    version: 3,
+    sections: [
+      {
+        offset: { line: 0, column: 0 },
+        map: { version: 3, sources: ['a.js'], names: [], mappings: 'AAAA' },
+      },
+      {
+        // b.js 1:0 at the section's 1:0, b.js 2:0 at the section's 2:0.
+        offset: { line: 1, column: 4 },
+        map: {
+          version: 3,
+          sources: ['b.js'],
+          names: [],
+          mappings: 'AAAA;AACA',
+        },
+      },
+    ],
+  });
+
+  var mappings = [];
+  map.eachMapping(function (m) {
+    if (m.source === 'b.js') {
+      mappings.push([m.generatedLine, m.generatedColumn, m.originalLine]);
+    }
+  });
+  assert.deepStrictEqual(mappings, [
+    [2, 4, 1],
+    [3, 0, 2],
+  ]);
+
+  assert.deepStrictEqual(
+    map.generatedPositionFor({ source: 'b.js', line: 1, column: 0 }),
+    { line: 2, column: 4 }
+  );
+  assert.deepStrictEqual(
+    map.generatedPositionFor({ source: 'b.js', line: 2, column: 0 }),
+    { line: 3, column: 0 }
+  );
+
+  // originalPositionFor already applied the offset to the right line.
+  assert.strictEqual(map.originalPositionFor({ line: 2, column: 4 }).line, 1);
+  assert.strictEqual(map.originalPositionFor({ line: 3, column: 0 }).line, 2);
+});
+
 test('mapping tokens fuzzy', () => {
   var map = new SourceMapConsumer(util.testMap);
 
