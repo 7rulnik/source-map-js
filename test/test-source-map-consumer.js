@@ -1468,6 +1468,67 @@ test('generatedPositionFor on an indexed source map matches the same map without
   );
 });
 
+// https://github.com/7rulnik/source-map-js/issues/108
+test('computeColumnSpans on an indexed source map', () => {
+  var map = new SourceMapConsumer({
+    version: 3,
+    sections: [section(0, 0, ['a.js'], 'AAAA,EAAE')],
+  });
+  map.computeColumnSpans();
+  assert.deepStrictEqual(
+    map.allGeneratedPositionsFor({ source: 'a.js', line: 1 }),
+    [
+      { line: 1, column: 0, lastColumn: 1 },
+      { line: 1, column: 2, lastColumn: Infinity },
+    ]
+  );
+  assert.deepStrictEqual(
+    map.generatedPositionFor({ source: 'a.js', line: 1, column: 0 }),
+    { line: 1, column: 0, lastColumn: 1 }
+  );
+
+  // A span ends where the next section starts on the same line.
+  map = new SourceMapConsumer({
+    version: 3,
+    sections: [
+      section(0, 0, ['a.js'], 'AAAA'),
+      section(0, 10, ['b.js'], 'AAAA'),
+    ],
+  });
+  map.computeColumnSpans();
+  assert.deepStrictEqual(
+    map.generatedPositionFor({ source: 'a.js', line: 1, column: 0 }),
+    { line: 1, column: 0, lastColumn: 9 }
+  );
+  assert.deepStrictEqual(
+    map.generatedPositionFor({ source: 'b.js', line: 1, column: 0 }),
+    { line: 1, column: 10, lastColumn: Infinity }
+  );
+});
+
+test('computeColumnSpans on an indexed source map matches the same map without sections', () => {
+  var basic = new SourceMapConsumer(util.testMap);
+  var indexed = new SourceMapConsumer(util.indexedTestMap);
+  basic.computeColumnSpans();
+  indexed.computeColumnSpans();
+  ['one.js', 'two.js'].forEach(function (source) {
+    for (var line = 1; line <= 3; line++) {
+      assert.deepStrictEqual(
+        indexed.allGeneratedPositionsFor({ source: source, line: line }),
+        basic.allGeneratedPositionsFor({ source: source, line: line })
+      );
+      [0, 1, 11].forEach(function (column) {
+        var args = { source: source, line: line, column: column };
+        assert.deepStrictEqual(
+          indexed.generatedPositionFor(args),
+          basic.generatedPositionFor(args),
+          JSON.stringify(args)
+        );
+      });
+    }
+  });
+});
+
 test('allGeneratedPositionsFor for column', () => {
   var map = new SourceMapGenerator({
     file: 'generated.js',
