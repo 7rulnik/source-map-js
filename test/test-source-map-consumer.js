@@ -253,6 +253,42 @@ test('mapping tokens back exactly in indexed source map', () => {
   util.assertMapping(2, 28, '/the/root/two.js', 2, 10, 'n', null, map, assert);
 });
 
+// https://github.com/7rulnik/source-map-js/issues/82
+test('originalPositionFor at the exact start of a section in an indexed source map', () => {
+  var map = new SourceMapConsumer({
+    version: 3,
+    sections: [
+      {
+        offset: { line: 0, column: 0 },
+        map: {
+          version: 3,
+          sources: ['a.js'],
+          names: [],
+          mappings: 'AAAA,EAAE',
+        },
+      },
+      {
+        offset: { line: 1, column: 4 },
+        map: { version: 3, sources: ['b.js'], names: [], mappings: 'AAAA' },
+      },
+    ],
+  });
+
+  function original(line, column) {
+    var pos = map.originalPositionFor({ line: line, column: column });
+    return [pos.source, pos.line, pos.column];
+  }
+
+  // The first column of each section.
+  assert.deepStrictEqual(original(1, 0), ['a.js', 1, 0]);
+  assert.deepStrictEqual(original(2, 4), ['b.js', 1, 0]);
+  // Other columns, which already worked.
+  assert.deepStrictEqual(original(1, 2), ['a.js', 1, 2]);
+  assert.deepStrictEqual(original(2, 5), ['b.js', 1, 0]);
+  // Before the second section starts on its line: nothing is mapped there.
+  assert.deepStrictEqual(original(2, 3), [null, null, null]);
+});
+
 test('mapping tokens fuzzy', () => {
   var map = new SourceMapConsumer(util.testMap);
 
