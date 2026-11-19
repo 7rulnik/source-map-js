@@ -3,12 +3,47 @@ export interface StartOfSourceMap {
   sourceRoot?: string;
 }
 
+/**
+ * A source map as `SourceMapGenerator#toJSON` returns it. For a source map
+ * passed to `SourceMapConsumer`, use `RawSourceMapInput`.
+ */
 export interface RawSourceMap extends StartOfSourceMap {
+  /** The number `3` at runtime. Typed as a string for backward compatibility. */
   version: string;
   sources: string[];
   names: string[];
+  /**
+   * `null` for each source without content at runtime. Typed as `string[]`
+   * for backward compatibility.
+   */
   sourcesContent?: string[];
   mappings: string;
+}
+
+/**
+ * A source map as `SourceMapConsumer` accepts it. Unlike `RawSourceMap`, the
+ * `version` can be a number, `sourcesContent` can have `null` entries, and
+ * `names` can be left out.
+ */
+export interface RawSourceMapInput extends StartOfSourceMap {
+  version: number | string;
+  sources: string[];
+  names?: string[];
+  sourcesContent?: (string | null)[];
+  mappings: string;
+}
+
+export interface RawSection {
+  /** Where the section starts in the generated code. Both are 0-based. */
+  offset: Position;
+  map: RawSourceMapInput | RawIndexMap;
+}
+
+/** A source map made of sections, each with its own source map. */
+export interface RawIndexMap {
+  version: number | string;
+  file?: string;
+  sections: RawSection[];
 }
 
 export interface Position {
@@ -50,16 +85,47 @@ export class SourceMapConsumer {
   static GREATEST_LOWER_BOUND: number;
   static LEAST_UPPER_BOUND: number;
 
-  constructor(rawSourceMap: RawSourceMap);
+  /**
+   * @param rawSourceMap A source map or an index map, as an object or as a
+   *   JSON string.
+   * @param sourceMapUrl The URL of the source map. Relative `sources` are
+   *   resolved against it.
+   */
+  constructor(
+    rawSourceMap: RawSourceMapInput | RawIndexMap | string,
+    sourceMapUrl?: string
+  );
+  static fromSourceMap(
+    sourceMap: SourceMapGenerator,
+    sourceMapUrl?: string
+  ): SourceMapConsumer;
   readonly file: string | undefined | null;
   readonly sourceRoot: string | undefined | null;
+  /** Can have `null` entries at runtime: one for each source without content. */
   readonly sourcesContent: readonly string[] | null | undefined;
   readonly sources: readonly string[];
 
   computeColumnSpans(): void;
+  /**
+   * At runtime, `source`, `line`, `column` and `name` are all `null` when no
+   * mapping is found, and `name` is `null` when the mapping has no name.
+   */
   originalPositionFor(generatedPosition: FindPosition): MappedPosition;
+  /**
+   * At runtime, `line`, `column` and `lastColumn` are all `null` when no
+   * mapping is found, and `lastColumn` is `null` until `computeColumnSpans()`
+   * is called.
+   */
   generatedPositionFor(originalPosition: SourceFindPosition): LineRange;
-  allGeneratedPositionsFor(originalPosition: MappedPosition): Position[];
+  /**
+   * Without a `column`, returns the mappings of the line, or of the next line
+   * that has mappings. `lastColumn` is `null` until `computeColumnSpans()` is
+   * called.
+   */
+  allGeneratedPositionsFor(
+    originalPosition:
+      MappedPosition | { source: string; line: number; column?: number }
+  ): Array<Position & { lastColumn: number | null }>;
   hasContentsOfAllSources(): boolean;
   sourceContentFor(
     source: string,
@@ -79,11 +145,18 @@ export interface Mapping {
   name?: string | null;
 }
 
+export interface SourceMapGeneratorOptions extends StartOfSourceMap {
+  /** Don't validate mappings in `addMapping`. */
+  skipValidation?: boolean;
+  /** Warn about invalid mappings and skip them, instead of throwing. */
+  ignoreInvalidMapping?: boolean;
+}
+
 export class SourceMapGenerator {
-  constructor(startOfSourceMap?: StartOfSourceMap);
+  constructor(startOfSourceMap?: SourceMapGeneratorOptions);
   static fromSourceMap(
     sourceMapConsumer: SourceMapConsumer,
-    startOfSourceMap?: StartOfSourceMap
+    startOfSourceMap?: SourceMapGeneratorOptions
   ): SourceMapGenerator;
   addMapping(mapping: Mapping): void;
   setSourceContent(
@@ -104,28 +177,45 @@ export interface CodeWithSourceMap {
   map: SourceMapGenerator;
 }
 
+/** A string of generated code, a `SourceNode`, or an array of chunks. */
+export type SourceNodeChunk = string | SourceNode | SourceNodeChunkArray;
+export interface SourceNodeChunkArray extends Array<SourceNodeChunk> {}
+
 export class SourceNode {
   constructor();
-  constructor(line: number, column: number, source: string);
   constructor(
-    line: number,
-    column: number,
-    source: string,
-    chunk?: string,
-    name?: string
+    line: number | null,
+    column: number | null,
+    source: string | null,
+    chunks?: SourceNodeChunk,
+    name?: string | null
   );
   static fromStringWithSourceMap(
     code: string,
     sourceMapConsumer: SourceMapConsumer,
     relativePath?: string
   ): SourceNode;
-  add(chunk: string): void;
-  prepend(chunk: string): void;
+  children: (string | SourceNode)[];
+  line: number | null;
+  column: number | null;
+  source: string | null;
+  name: string | null;
+  add(chunk: SourceNodeChunk): SourceNode;
+  prepend(chunk: SourceNodeChunk): SourceNode;
   setSourceContent(sourceFile: string, sourceContent: string): void;
+  /**
+   * At runtime, `source`, `line`, `column` and `name` are `null` for chunks
+   * without an original position, and `name` is `null` when there's no name.
+   */
   walk(fn: (chunk: string, mapping: MappedPosition) => void): void;
   walkSourceContents(fn: (file: string, content: string) => void): void;
   join(sep: string): SourceNode;
-  replaceRight(pattern: string, replacement: string): SourceNode;
+  replaceRight(
+    pattern: string | RegExp,
+    replacement: string | ((substring: string, ...args: any[]) => string)
+  ): SourceNode;
   toString(): string;
-  toStringWithSourceMap(startOfSourceMap?: StartOfSourceMap): CodeWithSourceMap;
+  toStringWithSourceMap(
+    startOfSourceMap?: SourceMapGeneratorOptions
+  ): CodeWithSourceMap;
 }
