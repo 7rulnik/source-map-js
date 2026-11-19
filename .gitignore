@@ -3,3 +3,5 @@
 .idea
 node_modules/*
 dist
+benchmarks/fixtures/
+benchmarks/node_modules/

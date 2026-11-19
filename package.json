@@ -59,7 +59,10 @@
     "test:coverage": "node --experimental-config-file=node.config.json --test --test-reporter=spec --experimental-test-coverage 'test/test-*.js'",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "toc": "doctoc --title '## Table of Contents' README.md && prettier --write README.md"
+    "toc": "doctoc --title '## Table of Contents' README.md && prettier --write README.md",
+    "bench": "node benchmarks/before-after.js",
+    "bench:compare": "node benchmarks/compare.js",
+    "bench:fixtures": "node benchmarks/fixtures.js"
   },
   "devDependencies": {
     "clean-publish": "^3.1.0",
