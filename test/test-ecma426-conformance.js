@@ -543,24 +543,18 @@ test('section with extra unknown properties is accepted', () => {
 //    section's first line.
 // ---------------------------------------------------------------------------
 
-test(
-  'the section column offset only applies to the first line of the section',
-  { todo: true },
-  () => {
-    var map = indexMap([
-      {
-        offset: { line: 1, column: 4 },
-        map: basicMap({ mappings: 'AAAA;AACA' }),
-      },
-    ]);
-    // Today the offset lands on the section's second line instead:
-    // [2, 0, ...] and [3, 4, ...].
-    assert.deepEqual(decode(map), [
-      [2, 4, 'a.js', 1, 0, null],
-      [3, 0, 'a.js', 2, 0, null],
-    ]);
-  }
-);
+test('the section column offset only applies to the first line of the section', () => {
+  var map = indexMap([
+    {
+      offset: { line: 1, column: 4 },
+      map: basicMap({ mappings: 'AAAA;AACA' }),
+    },
+  ]);
+  assert.deepEqual(decode(map), [
+    [2, 4, 'a.js', 1, 0, null],
+    [3, 0, 'a.js', 2, 0, null],
+  ]);
+});
 
 test('`sections` that is not an array is rejected', () => {
   assert.throws(() => decode({ version: 3, sections: {} }));
